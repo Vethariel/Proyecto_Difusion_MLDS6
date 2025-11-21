@@ -1,7 +1,7 @@
 # Project Charter - Entendimiento del Negocio
 
 ## Nombre del Proyecto
-
+Proyecto difusión
 [Nombre del proyecto aquí]
 
 ## Objetivo del Proyecto
