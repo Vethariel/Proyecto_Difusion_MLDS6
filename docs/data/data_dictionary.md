@@ -1,38 +1,16 @@
 # Diccionario de datos
 
-## Base de datos 1
+## Base de datos
 
-**Agregar una descripción de la tabla o fuente de datos.
+** Contamos con un dataset proveniente de Kaggle que contiene 89.400 imágenes de distintos objetos, con un tamaño de 16x16 pixeles con 3 canales que pertenecen a un juego online. Contamos con los siguientes archivos:
 
-| Variable | Descripción | Tipo de dato | Rango/Valores posibles | Fuente de datos |
-| --- | --- | --- | --- | --- |
-| variable_1 | Descripción de la variable 1 | Tipo de dato | Rango/Valores posibles | Fuente de datos |
-| variable_2 | Descripción de la variable 2 | Tipo de dato | Rango/Valores posibles | Fuente de datos |
-| variable_3 | Descripción de la variable 3 | Tipo de dato | Rango/Valores posibles | Fuente de datos |
-| variable_4 | Descripción de la variable 4 | Tipo de dato | Rango/Valores posibles | Fuente de datos |
-| variable_5 | Descripción de la variable 5 | Tipo de dato | Rango/Valores posibles | Fuente de datos |
+- images: Carpeta con las imagenes.
+- labels.csv: Este archivo contiene las etiquetas de las imagenes.
+- sprites.npy: Este archivo tiene objetos de tipo numpy array con los sprites.
+- sprites_labels.npy: Este archivo contiene las etiquetas en formato numpy.
 
-- **Variable**: nombre de la variable.
-- **Descripción**: breve descripción de la variable.
-- **Tipo de dato**: tipo de dato que contiene la variable.
-- **Rango/Valores posibles**: rango o valores que puede tomar la variable.
-- **Fuente de datos**: fuente de los datos de la variable.
+En la fuente de los datos, se observa que el archivo labels.csv cuenta con con las siguientes columnas
 
-## Base de datos 2
-
-**Agregar una descripción de la tabla o fuente de datos.
-
-| Variable | Descripción | Tipo de dato | Rango/Valores posibles | Fuente de datos |
-| --- | --- | --- | --- | --- |
-| variable_1 | Descripción de la variable 1 | Tipo de dato | Rango/Valores posibles | Fuente de datos |
-| variable_2 | Descripción de la variable 2 | Tipo de dato | Rango/Valores posibles | Fuente de datos |
-| variable_3 | Descripción de la variable 3 | Tipo de dato | Rango/Valores posibles | Fuente de datos |
-| variable_4 | Descripción de la variable 4 | Tipo de dato | Rango/Valores posibles | Fuente de datos |
-| variable_5 | Descripción de la variable 5 | Tipo de dato | Rango/Valores posibles | Fuente de datos |
-
-- **Variable**: nombre de la variable.
-- **Descripción**: breve descripción de la variable.
-- **Tipo de dato**: tipo de dato que contiene la variable.
-- **Rango/Valores posibles**: rango o valores que puede tomar la variable.
-- **Fuente de datos**: fuente de los datos de la variable.
-
+| Image Index | ID de cada imagen | int | 1-89400 |
+| Image Path | Camino a cada imagen | str | - |
+| Label | Tipo de la imagen, no hay documentacion sobre esto | list | lista con cinco valores, cuatro con 0 y uno con 1 |
