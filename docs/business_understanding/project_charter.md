@@ -12,7 +12,7 @@ Desarrollar un sistema generativo capaz de producir imágenes tipo pixel art, en
 
 ### Incluye:
 
-- Uso del dataset Pixel Art (Kaggle) con 89,000 imágenes JPEG de 16×16 pixeles y sus respectivas etiquetas.
+- Uso del dataset Pixel Art ([Kaggle][https://www.kaggle.com/datasets/ebrahimelgazar/pixel-art/]) con 89,000 imágenes JPEG de 16×16 pixeles y sus respectivas etiquetas.
 - Procesos de limpieza, análisis exploratorio, normalización de imágenes y construcción del pipeline de datos.
 - Entrenamiento de un modelo de difusión (DDPM o UNet-based) y comparación con al menos un baseline generativo (VAE o GAN).
 - Evaluación del modelo con métricas como FID/KID y panel comparativo de muestras generadas.
