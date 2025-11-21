@@ -10,7 +10,7 @@ Desarrollar un sistema generativo capaz de producir imágenes tipo pixel art, en
 
 ## Alcance del Proyecto
 
-### Incluye: ## hola
+### Incluye:
 
 - Uso del dataset Pixel Art (Kaggle) con 89,000 imágenes JPEG de 16×16 pixeles y sus respectivas etiquetas.
 - Procesos de limpieza, análisis exploratorio, normalización de imágenes y construcción del pipeline de datos.
