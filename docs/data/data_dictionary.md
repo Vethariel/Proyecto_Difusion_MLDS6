@@ -13,4 +13,4 @@ En la fuente de los datos, se observa que el archivo labels.csv cuenta con con l
 
 | Image Index | ID de cada imagen | int | 1-89400 |
 | Image Path | Camino a cada imagen | str | - |
-| Label | Tipo de la imagen, no hay documentacion sobre esto, hay que explorarlo | list | lista con cinco valores, cuatro con 0 y uno con 1 |
+| Label | Tipo de la imagen, no hay documentacion sobre esto | list | lista con cinco valores, cuatro con 0 y uno con 1 |
