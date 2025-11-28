@@ -27,8 +27,6 @@ Para imágenes, estas “variables” son:
 
 ### ✔️ 1.5 Distribución general de las imágenes
 - Mosaico aleatorio de **100–300 imágenes**.  
-- Verificar tamaño uniforme (16×16).  
-- Verificar distribución de categorías (≈4.470 por clase).
 
 ## 2. Resumen de calidad de los datos
 
