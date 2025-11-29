@@ -173,14 +173,25 @@ Canal  Media  StdDev  Min   Q1  Mediana     Q3    Max
 Donde podemos ver todos los canales de color alcanzan la menor y mayor intensidad en algun momento, siendo esto respaldado por el hecho de la gran cantidad de areas o pixeles en negro que hay dentro de las imagenes, debido a esto también podemos ver que las desviaciones estandar tienen valores bastante altos con respecto a las medias de intensidad en cada uno de los canales. Este script tiene la capacidad de almacenar los histogramas y medidas estadisticas obtenidas en una nueva carpeta de nombre `analisis_4_1_rgb` dentro del directorio de git principal.
 
 ### ✔️ 4.2 Número de colores por imagen
-- Conteo de colores únicos.
+<!-- - Conteo de colores únicos.
 - Relación entre número de colores y etiqueta.
 - Clasificación por:
 - Low palette
 - Mid palette
-- High palette
+- High palette -->
 
-### ✔️ 4.3 Estructura espacial
+Como resultado de la ejecución del script `4_2_numero_colores.py`, podemos concluir lo siguiente.
+
+El analisis en este script se realizo con 8000 imagenes obtiendo como resultado
+
+## 🎨 Distribución de Imágenes por Tipo de Paleta
+       palette_class  Conteo
+ High_Palette (>128)    7515
+Mid_Palette (33-128)     485
+
+Lo que indica que la matoria de las imagenes tienen una gran variedad de colores, lo que implica que el dominio del negro en los histogramas que se han generado hasta el momento, no esta relacionada con la diversidad de colores de la imagen.
+
+<!-- ### ✔️ 4.3 Estructura espacial
 - Verificar centrado del sprite.
 - Análisis de espacio vacío vs contenido.
 - Heatmap de densidad de píxeles por clase.
@@ -198,7 +209,7 @@ Donde podemos ver todos los canales de color alcanzan la menor y mayor intensida
 ### ✔️ 4.5 Relación con etiqueta
 - Mapas de calor por clase.
 - Imagen promedio por clase.
-- Modos de color por clase.
+- Modos de color por clase. -->
 
 ## 5. Ranking de variables
 
