@@ -1,0 +1,256 @@
+{
+    "pca_analysis": {
+        "n_samples": 89400,
+        "flat_dim": 768,
+        "variance_first_component": 0.12129306048154831,
+        "variance_first_10": 0.4688391387462616,
+        "variance_first_20": 0.5959593653678894,
+        "variance_curve_file": "reports\\figures\\eda\\pca\\variance_ratio.png",
+        "reconstruction_files": {
+            "k10": "reports\\figures\\eda\\pca\\reconstruction_k10.png",
+            "k20": "reports\\figures\\eda\\pca\\reconstruction_k20.png",
+            "k30": "reports\\figures\\eda\\pca\\reconstruction_k30.png"
+        }
+    },
+    "color_importance": {
+        "global_variance": {
+            "R": 0.13030947744846344,
+            "G": 0.12668539583683014,
+            "B": 0.17720940709114075
+        },
+        "class_variances": {
+            "0": [
+                0.12387340515851974,
+                0.13313426077365875,
+                0.1459205001592636
+            ],
+            "1": [
+                0.15260347723960876,
+                0.12164902687072754,
+                0.14733394980430603
+            ],
+            "2": [
+                0.0769287645816803,
+                0.0951094999909401,
+                0.12779724597930908
+            ],
+            "3": [
+                0.1695263832807541,
+                0.16695889830589294,
+                0.17967039346694946
+            ],
+            "4": [
+                0.11465639621019363,
+                0.12729531526565552,
+                0.14193135499954224
+            ]
+        },
+        "colorfulness": {
+            "0": 0.2311292588710785,
+            "1": 0.38065749406814575,
+            "2": 0.30509352684020996,
+            "3": 0.22013069689273834,
+            "4": 0.22773627936840057
+        },
+        "pca_channel_importance": {
+            "R": 0.17406600713729858,
+            "G": 0.15636949241161346,
+            "B": 0.18478849530220032
+        },
+        "ranking": {
+            "R": 0.30437546968460083,
+            "G": 0.2830548882484436,
+            "B": 0.36199790239334106
+        },
+        "figure_files": {
+            "global_variance": "reports\\figures\\eda\\color\\global_variance.png",
+            "variance_by_class": "reports\\figures\\eda\\color\\variance_by_class.png",
+            "colorfulness_by_class": "reports\\figures\\eda\\color\\colorfulness_by_class.png",
+            "pca_by_channel": "reports\\figures\\eda\\color\\pca_by_channel.png"
+        }
+    },
+    "aux_classifier": {
+        "n_samples": 89400,
+        "n_classes": 5,
+        "train_size": 71520,
+        "val_size": 17880,
+        "accuracy_last_epoch": 1.0,
+        "loss_last_epoch": 7.127632852643728e-05,
+        "figure_files": {
+            "accuracy_curve": "reports\\figures\\eda\\aux_classifier\\accuracy_curve.png",
+            "loss_curve": "reports\\figures\\eda\\aux_classifier\\loss_curve.png",
+            "confusion_matrix": "reports\\figures\\eda\\aux_classifier\\confusion_matrix.png"
+        },
+        "classification_report_file": "reports\\eda\\aux_classifier_results.txt",
+        "confusion_matrix": [
+            [
+                1600,
+                0,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                6480,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                1200,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                7000,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                1600
+            ]
+        ]
+    },
+    "class_separability": {
+        "n_samples": 89400,
+        "n_classes": 5,
+        "label_visualization": {
+            "mosaic_files": {
+                "0": "reports\\figures\\eda\\class_separability\\label_grid_class0.png",
+                "1": "reports\\figures\\eda\\class_separability\\label_grid_class1.png",
+                "2": "reports\\figures\\eda\\class_separability\\label_grid_class2.png",
+                "3": "reports\\figures\\eda\\class_separability\\label_grid_class3.png",
+                "4": "reports\\figures\\eda\\class_separability\\label_grid_class4.png"
+            },
+            "mean_image_files": {
+                "0": "reports\\figures\\eda\\class_separability\\label_mean_class0.png",
+                "1": "reports\\figures\\eda\\class_separability\\label_mean_class1.png",
+                "2": "reports\\figures\\eda\\class_separability\\label_mean_class2.png",
+                "3": "reports\\figures\\eda\\class_separability\\label_mean_class3.png",
+                "4": "reports\\figures\\eda\\class_separability\\label_mean_class4.png"
+            }
+        },
+        "color_stats": {
+            "0": {
+                "mean_rgb": [
+                    0.6809880137443542,
+                    0.6435337662696838,
+                    0.6189315915107727
+                ],
+                "std_rgb": [
+                    0.3519565463066101,
+                    0.3648756742477417,
+                    0.38199540972709656
+                ]
+            },
+            "1": {
+                "mean_rgb": [
+                    0.6764736175537109,
+                    0.7091769576072693,
+                    0.681799054145813
+                ],
+                "std_rgb": [
+                    0.39064493775367737,
+                    0.3487822115421295,
+                    0.38384103775024414
+                ]
+            },
+            "2": {
+                "mean_rgb": [
+                    0.84250807762146,
+                    0.7619250416755676,
+                    0.6966646909713745
+                ],
+                "std_rgb": [
+                    0.27736034989356995,
+                    0.3083982765674591,
+                    0.35748741030693054
+                ]
+            },
+            "3": {
+                "mean_rgb": [
+                    0.6782482266426086,
+                    0.6398099064826965,
+                    0.6158644556999207
+                ],
+                "std_rgb": [
+                    0.41173580288887024,
+                    0.40860605239868164,
+                    0.42387545108795166
+                ]
+            },
+            "4": {
+                "mean_rgb": [
+                    0.7187836170196533,
+                    0.6867879033088684,
+                    0.6619320511817932
+                ],
+                "std_rgb": [
+                    0.338609516620636,
+                    0.3567847013473511,
+                    0.3767377734184265
+                ]
+            }
+        },
+        "embeddings": {
+            "tsne_file": "reports\\figures\\eda\\class_separability\\tsne_labels.png"
+        },
+        "silhouette": {
+            "raw_pixels": -0.051021937280893326,
+            "pca_50": -0.03419037535786629,
+            "figure_file": "reports\\figures\\eda\\class_separability\\silhouette_scores.png"
+        },
+        "kmeans": {
+            "n_clusters": 5,
+            "ari": 0.057508918670665383,
+            "nmi": 0.19431206395412526,
+            "confusion_matrix_file": "reports\\figures\\eda\\class_separability\\confusion_clusters.png",
+            "confusion_matrix": [
+                [
+                    0,
+                    100,
+                    0,
+                    0,
+                    7900
+                ],
+                [
+                    10200,
+                    15600,
+                    0,
+                    0,
+                    6600
+                ],
+                [
+                    100,
+                    3800,
+                    0,
+                    550,
+                    1550
+                ],
+                [
+                    8450,
+                    9750,
+                    5900,
+                    5250,
+                    5650
+                ],
+                [
+                    500,
+                    4100,
+                    0,
+                    50,
+                    3350
+                ]
+            ]
+        }
+    }
+}

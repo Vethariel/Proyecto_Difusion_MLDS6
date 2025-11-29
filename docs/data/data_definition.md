@@ -2,8 +2,6 @@
 
 ## Origen de los datos
 
-- [ ] Especificar la fuente de los datos y la forma en que se obtuvieron.
-
 El dataset fue obtenido de la plataforma `Kaggle`, específicamente del repositorio público "**Pixel Art**" creado por el usuario Ebrahim Elgazar. El conjunto de datos contiene 89,000 imágenes de pixel art que representan varios personajes y objetos `Kaggle`.
 
 **Detalles técnicos de la fuente**:
@@ -30,8 +28,6 @@ La fuente original no proporciona documentación sobre el significado de cada ca
 
 ## Scripts para la carga de datos
 
-- [ ] Especificar los scripts utilizados para la carga de los datos.
-
 Como se mencionó en la sección anterior, se utilizó el script `main.py` ubicado en `.\scripts\data_acquisition` para automatizar la fase de adquisición de datos. Este script implementa un pipeline programático que:
 
     1. **Descarga desde Kaggle**: Utiliza la biblioteca `kagglehub` para conectarse con la API de Kaggle y descargar el dataset identificado como `ebrahimelgazar/pixel-art` a la caché local del sistema (típicamente en `~/.cache/kagglehub/...`)
@@ -43,13 +39,7 @@ Esta implementación garantiza reproducibilidad (cualquier miembro del equipo pu
 
 ## Referencias a rutas o bases de datos origen y destino
 
-- [ ] Especificar las rutas o bases de datos de origen y destino para los datos.
-
 ### Rutas de origen de datos
-
-- [ ] Especificar la ubicación de los archivos de origen de los datos.
-- [ ] Especificar la estructura de los archivos de origen de los datos.
-- [ ] Describir los procedimientos de transformación y limpieza de los datos.
 
 **Ubicación de los archivos de origen**:
 
@@ -76,10 +66,6 @@ pixel-art/
 ```
 
 ### Base de datos de destino
-
-- [ ] Especificar la base de datos de destino para los datos.
-- [ ] Especificar la estructura de la base de datos de destino.
-- [ ] Describir los procedimientos de carga y transformación de los datos en la base de datos de destino.
 
 La base de datos de destino corresponde a un sistema de almacenamiento basado en archivos en el sistema local, estructurado específicamente para workflows de aprendizaje automático con imágenes.
 
