@@ -99,8 +99,12 @@ Como resultado de la ejecución del script `3_3_variable_interclase.py`, podemos
 Con el fin de comprender  las caracteristicas visuales de algunas de las categorias se compara el contenidos de dos mosaicos de $5\times5$ para dos categorias ecogidas al azar. La falta de homogeneidad de los objetos observados dentro de cada uno de los mosaicos, dejan ver que hay algo de `lable noise` dentro de todas las categorias, aumentando la variabilidad intra clases en todas las categorias y exigiendo a futuro mayor capacidad por parte de los modelos que se vayan a implementar.
 
 ### ✔️ 3.4 Variabilidad global
-- **PCA** sobre vectores flattenizados (16×16×3 → 768 componentes).
-- **t-SNE** para clusters naturales.
+<!-- - **PCA** sobre vectores flattenizados (16×16×3 → 768 componentes).
+- **t-SNE** para clusters naturales. -->
+
+Como resultado de la ejecución del script `3_4_variabilidad_global.py`, podemos concluir lo siguiente.
+
+PCA nos permitirá descomponer las imágenes (vectores de 768 dimensiones) y entender qué dimensiones (o combinaciones de píxeles) explican la mayor parte de la variación en tu dataset de pixel art. Esto es crucial para la eficiencia, ya que, si el 99% de la varianza se explica con solo 50 componentes, podemos reducir drásticamente la dimensionalidad para ciertos entrenamientos o análisis posteriores. Por esta razón utilizaremos el criterio del umbral, identificando la cantidad de componentes en donde se tiene el 80% y el 90% de la varianza explicada, la ejecución del script muestra la cantidad de componentes necesarias para cada porcentaje escogido.
 
 ## 4. Variables individuales
 
