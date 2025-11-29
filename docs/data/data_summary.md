@@ -1,6 +1,9 @@
 # Reporte de Datos
 
-Header
+Este documento presenta una visión global, técnica y estructurada del dataset utilizado en el proyecto. Resume su composición, calidad, estructura latente y separabilidad, integrando evidencias generadas por los distintos módulos de EDA ubicados en `./scripts/eda`.
+
+Cada sección sintetiza hallazgos clave necesarios para comprender la naturaleza del dataset y su adecuación para modelos de difusión generativa y arquitecturas condicionadas por clase.
+
 
 ## 1. Resumen general de los datos
 
@@ -495,3 +498,73 @@ El clasificador auxiliar funciona como evidencia empírica de que la estructura 
 
 ---
 
+## Conclusiones Generales del Dataset
+
+El análisis integral del dataset revela que se trata de un conjunto **altamente estructurado**, con patrones visuales fuertes, clases coherentes y un estilo gráfico uniforme que facilita el modelado generativo. A partir de la exploración realizada, se concluye lo siguiente:
+
+### 1. La estructura visual del dataset es extremadamente consistente
+PCA, colorimetría, distribuciones de intensidad y promedios por clase muestran que:
+
+- Las imágenes comparten siluetas, proporciones y paletas similares.
+- Gran parte de la variabilidad se concentra en pocas dimensiones latentes.
+- Con **20–30 componentes PCA** se puede reconstruir buena parte del contenido visual.
+
+Esto indica un **espacio latente compacto** y perfectamente utilizable para modelos de difusión.
+
+### 2. El color es un factor discriminativo fuerte
+El análisis cromático demuestra:
+
+- El canal **B (azul)** domina la variabilidad global.
+- Cada clase posee una firma cromática estable.
+- Las diferencias entre clases están asociadas tanto al estilo como a fuentes visuales distintas.
+
+Esto refuerza la idea de que los modelos generativos pueden beneficiarse de *conditioning* basado en color y clase.
+
+### 3. Las clases muestran coherencia interna, aunque no forman clusters naturales
+Tanto t-SNE como silhouette indican:
+
+- Las clases no forman grupos compactos en términos puramente geométricos.
+- Hay solapamiento visual superficial entre clases (paletas y formas similares).
+- La etiqueta no corresponde a divisiones lineales en el espacio de píxeles.
+
+Sin embargo…
+
+### 4. Una CNN pequeña logra **100% de accuracy**, revelando separabilidad real
+El clasificador auxiliar demuestra que:
+
+- Las clases **sí contienen información visual fuerte**, pero no representada linealmente.
+- Las diferencias reales son no lineales y espaciales (contornos, microtexturas, poses).
+- Estas señales son suficientemente robustas para ser detectadas por redes convolucionales simples.
+
+Esto confirma que el etiquetado **es sólido** y que los modelos generativos condicionados funcionarán sin ambigüedades.
+
+### 5. El dataset es adecuado para modelos de difusión
+Los hallazgos convergen en una idea central:
+
+**El dataset tiene estructura, variabilidad controlada y clases muy diferenciables.**  
+Esto lo convierte en un candidato ideal para:
+
+- Modelos de difusión,
+- Autoencoders,
+- Representaciones latentes compactas,
+- Modelos condicionados por clase,
+- Transferencia de estilo visual.
+
+### 6. A nivel práctico, el dataset es limpio, consistente y eficiente
+- No se registran anomalías severas.
+- La resolución es uniforme (16×16×3).
+- Las clases tienen tamaños equilibrados.
+- Los duplicados fueron gestionados adecuadamente.
+- El procesamiento es rápido gracias a la compacidad del dominio visual.
+
+---
+
+### **Conclusión Final**
+
+El dataset posee tres propiedades clave:
+
+1. **Estructura latente compacta**  
+2. **Separabilidad no lineal pero fuerte entre clases**  
+3. **Coherencia estética que facilita el aprendizaje generativo**
+
+En conjunto, esto respalda la viabilidad técnica del proyecto y sienta una base sólida para el modelado, especialmente para técnicas de difusión donde la calidad del espacio latente y la consistencia visual son determinantes.
