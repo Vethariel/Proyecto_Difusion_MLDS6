@@ -31,10 +31,9 @@ Para imágenes, estas “variables” son:
 ## 2. Resumen de calidad de los datos
 
 ### ✔️ 2.1 Presencia de valores faltantes
-Reporte exacto de:
-- Imágenes sin entrada en CSV.  
+Reporte exacto de: 
 - Rutas inválidas.  
-- Errores de lectura (PIL, OpenCV).
+
 
 ### ✔️ 2.2 Duplicados
 - Detectar duplicados por hash (MD5 o perceptual hash).  
