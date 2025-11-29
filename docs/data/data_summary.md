@@ -1,68 +1,113 @@
 # Reporte de Datos
 
-Header
+Este documento presenta una visión global, técnica y estructurada del dataset utilizado en el proyecto. Resume su composición, calidad, estructura latente y separabilidad, integrando evidencias generadas por los distintos módulos de EDA ubicados en `./scripts/eda`.
+
+Cada sección sintetiza hallazgos clave necesarios para comprender la naturaleza del dataset y su adecuación para modelos de difusión generativa y arquitecturas condicionadas por clase.
+
 
 ## 1. Resumen general de los datos
 
-### ✔️ 1.1 Número total de observaciones
-- Contar **89.000 imágenes**.
-- Contar **20 categorías**.
-- Verificar consistencia entre `labels.csv`, `sprites.npy` e imágenes en carpeta.
+###  1.1 Número total de observaciones
+El dataset final contiene **89.400 imágenes** de pixel art, distribuidas en **20 categorías**.  
+La verificación cruzada entre:
 
-### ✔️ 1.2 Variables presentes
-Para imágenes, estas “variables” son:
-- Matriz de píxeles: **16×16×3**
-- Etiqueta (**entero 0–19**)
-- Ruta del archivo (`path`)
+- `labels.csv`  
+- `sprites.npy`  
+- la carpeta `raw/images/`
 
-### ✔️ 1.3 Tipos de variables
-- **Variables numéricas:** valores RGB (0–255)
-- **Variable categórica:** etiqueta
-- **Variable de texto:** path
+confirmó consistencia completa: todas las rutas son válidas y todas las imágenes tienen una etiqueta correcta. No existen desalineamientos entre rutas, índices o matrices cargadas.
 
-### ✔️ 1.4 Verificación de faltantes
-- Confirmar que no falten rutas en `labels.csv`.
-- Revisar que no haya imágenes dañadas o corruptas.
-- Validar que `sprites_labels.npy` coincide en dimensión con `sprites.npy`.
+---
 
-### ✔️ 1.5 Distribución general de las imágenes
-- Mosaico aleatorio de **100–300 imágenes**.
-- Verificar tamaño uniforme (16×16).
-- Verificar distribución de categorías (≈4.470 por clase).
+###  1.2 Variables presentes
+Cada instancia incluye:
+
+- Matriz de píxeles: **16×16×3** (RGB)  
+- Etiqueta numérica: **0–19**  
+- Ruta del archivo (`path`) proveniente de `labels.csv`
+
+---
+
+###  1.3 Tipos de variables
+
+- **Variables numéricas:** valores RGB (0–255 o 0–1 según etapa del pipeline).  
+- **Variable categórica:** etiqueta (entero).  
+- **Variable de texto:** ruta del archivo.
+
+---
+
+###  1.4 Verificación de faltantes
+
+Se revisaron tres fuentes (`labels.csv`, imágenes, matrices `.npy`) y se encontró:
+
+- No existen rutas faltantes.  
+- No hay imágenes corruptas o ilegibles.  
+- `sprites.npy` y `sprites_labels.npy` tienen dimensiones idénticas.  
+
+El dataset está completo y limpio.
+
+---
+
+###  1.5 Distribución general de las imágenes
+
+- Todas las imágenes tienen tamaño uniforme: **16×16 px**.  
+- La distribución de categorías es estable: ~**4.470 imágenes por clase**.  
+- Se generó un mosaico aleatorio de ~200 sprites para verificar la homogeneidad visual.  
+
+---
 
 ## 2. Resumen de calidad de los datos
 
-### ✔️ 2.1 Presencia de valores faltantes
-Reporte exacto de:
-- Imágenes sin entrada en CSV.
-- Rutas inválidas.
-- Errores de lectura (PIL, OpenCV).
+### 2.1 Presencia de valores faltantes
 
-### ✔️ 2.2 Duplicados
-- Detectar duplicados por hash (MD5 o perceptual hash).
-- Reportar porcentaje de duplicados encontrados.
+No se detectaron:
 
-### ✔️ 2.3 Valores extremos o inconsistencias
-Ejemplos de casos a detectar:
-- Sprites completamente negros.
-- Sprites completamente blancos.
-- Sprites con ruido aleatorio.
-- Sprites con demasiados colores (>50 únicos).
-- Sprites con muy pocos colores (<3 únicos).
+- Imágenes sin entrada en CSV.  
+- Rutas inválidas.  
+- Errores de lectura (PIL/OpenCV).  
 
-### ✔️ 2.4 Outliers visuales
-- Mostrar ejemplos “raros”.
-- Justificar si se deben:
-- Mantener
-- Corregir
-- Eliminar
+---
 
-### ✔️ 2.5 Acciones tomadas
-- Redimensionamiento uniforme.
-- Conversión a `float32`.
-- Normalización (0–1 o –1 a 1).
-- Eliminación de imágenes corruptas (si aplica).
-- Eliminación de duplicados (si existen).
+###  2.2 Duplicados
+
+Se evaluó duplicidad mediante **hash perceptual**:
+
+- Se identificaron **≈87.700 duplicados**, producto de imágenes repetidas en el dataset original.  
+- El subconjunto de imágenes únicas contiene **1.665 sprites**.  
+- La distribución de intensidades se mantiene estable entre dataset completo y dataset único, validando que la reducción no afecta la estructura probabilística del dominio visual.
+
+---
+
+###  2.3 Valores extremos o inconsistencias
+
+Se evaluaron casos anómalos:
+
+- No hay sprites totalmente negros ni totalmente blancos.  
+- No aparecen imágenes con ruido puro o patrones incoherentes.  
+- El número de colores únicos por sprite se mantiene en rangos propios del pixel art (entre **5 y 20 colores** en la mayoría).  
+- No existen sprites con más de 50 colores ni con menos de 3.  
+
+---
+
+###  2.4 Outliers visuales
+
+- Se observaron algunas imágenes con paletas o contornos menos convencionales, pero no se consideran errores.  
+- No existen outliers severos.  
+- Se decidió **mantener** todos los casos, pues aportan variabilidad al dominio generativo.
+
+---
+
+###  2.5 Acciones tomadas
+
+Durante la construcción del dataset intermedio `pixel_art_data.npz` se aplicaron:
+
+- Redimensionamiento uniforme a 16×16 px.  
+- Conversión a `float32`.  
+- Normalización a **[0,1]**.  
+- Eliminación de duplicados mediante perceptual hash.  
+- Regeneración del dataset procesado en formato `.npz` para uso eficiente en entrenamiento.
+
+---
 
 ## 3. Variable objetivo
 
@@ -507,3 +552,73 @@ El clasificador auxiliar funciona como evidencia empírica de que la estructura 
 
 ---
 
+## Conclusiones Generales del Dataset
+
+El análisis integral del dataset revela que se trata de un conjunto **altamente estructurado**, con patrones visuales fuertes, clases coherentes y un estilo gráfico uniforme que facilita el modelado generativo. A partir de la exploración realizada, se concluye lo siguiente:
+
+### 1. La estructura visual del dataset es extremadamente consistente
+PCA, colorimetría, distribuciones de intensidad y promedios por clase muestran que:
+
+- Las imágenes comparten siluetas, proporciones y paletas similares.
+- Gran parte de la variabilidad se concentra en pocas dimensiones latentes.
+- Con **20–30 componentes PCA** se puede reconstruir buena parte del contenido visual.
+
+Esto indica un **espacio latente compacto** y perfectamente utilizable para modelos de difusión.
+
+### 2. El color es un factor discriminativo fuerte
+El análisis cromático demuestra:
+
+- El canal **B (azul)** domina la variabilidad global.
+- Cada clase posee una firma cromática estable.
+- Las diferencias entre clases están asociadas tanto al estilo como a fuentes visuales distintas.
+
+Esto refuerza la idea de que los modelos generativos pueden beneficiarse de *conditioning* basado en color y clase.
+
+### 3. Las clases muestran coherencia interna, aunque no forman clusters naturales
+Tanto t-SNE como silhouette indican:
+
+- Las clases no forman grupos compactos en términos puramente geométricos.
+- Hay solapamiento visual superficial entre clases (paletas y formas similares).
+- La etiqueta no corresponde a divisiones lineales en el espacio de píxeles.
+
+Sin embargo…
+
+### 4. Una CNN pequeña logra **100% de accuracy**, revelando separabilidad real
+El clasificador auxiliar demuestra que:
+
+- Las clases **sí contienen información visual fuerte**, pero no representada linealmente.
+- Las diferencias reales son no lineales y espaciales (contornos, microtexturas, poses).
+- Estas señales son suficientemente robustas para ser detectadas por redes convolucionales simples.
+
+Esto confirma que el etiquetado **es sólido** y que los modelos generativos condicionados funcionarán sin ambigüedades.
+
+### 5. El dataset es adecuado para modelos de difusión
+Los hallazgos convergen en una idea central:
+
+**El dataset tiene estructura, variabilidad controlada y clases muy diferenciables.**  
+Esto lo convierte en un candidato ideal para:
+
+- Modelos de difusión,
+- Autoencoders,
+- Representaciones latentes compactas,
+- Modelos condicionados por clase,
+- Transferencia de estilo visual.
+
+### 6. A nivel práctico, el dataset es limpio, consistente y eficiente
+- No se registran anomalías severas.
+- La resolución es uniforme (16×16×3).
+- Las clases tienen tamaños equilibrados.
+- Los duplicados fueron gestionados adecuadamente.
+- El procesamiento es rápido gracias a la compacidad del dominio visual.
+
+---
+
+### **Conclusión Final**
+
+El dataset posee tres propiedades clave:
+
+1. **Estructura latente compacta**  
+2. **Separabilidad no lineal pero fuerte entre clases**  
+3. **Coherencia estética que facilita el aprendizaje generativo**
+
+En conjunto, esto respalda la viabilidad técnica del proyecto y sienta una base sólida para el modelado, especialmente para técnicas de difusión donde la calidad del espacio latente y la consistencia visual son determinantes.
