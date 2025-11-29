@@ -4,7 +4,8 @@
 # podemos observar el histograma de la distribución de cada conjunto, junto a una imagen muy probable dentro del conjunto y otra de ruido poco
 # probable dentro del mismo.
 
-# Los graficos de densidades son muy similares entre si, siendo los valores de intensidad cercanos a cero los que acumulan la mayor parte de la densidad, dandonos a entender que en todas las imagenes el color negro o cercanos a este predomina sobre los demás.
+# Los graficos de densidades son muy similares entre si, siendo los valores de intensidad cercanos a cero los que acumulan la mayor parte de la
+# densidad, dandonos a entender que en todas las imagenes el color negro o cercanos a este predomina sobre los demás.
 
 import os
 import numpy as np

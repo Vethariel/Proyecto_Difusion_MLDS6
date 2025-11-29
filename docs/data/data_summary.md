@@ -156,9 +156,21 @@ PCA nos permitirá descomponer las imágenes (vectores de 768 dimensiones) y ent
 *(Adaptado a análisis de imágenes)*
 
 ### ✔️ 4.1 Canales RGB como variables
-- Histograma por canal.
+<!-- - Histograma por canal.
 - Distribución de valores RGB por clase.
-- Estadísticas descriptivas por canal.
+- Estadísticas descriptivas por canal. -->
+
+Como resultado de la ejecución del script `4_1_rgb_variable.py`, podemos concluir lo siguiente.
+
+En la ejecución de este script podemos ver los siguientes resultados en cuanto a medidas estadisticas
+
+## 📊 Estadísticas Descriptivas Globales (Canales RGB)
+Canal  Media  StdDev  Min   Q1  Mediana     Q3    Max
+    R  64.96   79.15 0.00 1.00    17.00 128.00 255.00
+    G  70.59   83.84 0.00 3.00    17.00 143.00 255.00
+    B  76.80   86.86 0.00 4.00    24.00 158.00 255.00
+
+Donde podemos ver todos los canales de color alcanzan la menor y mayor intensidad en algun momento, siendo esto respaldado por el hecho de la gran cantidad de areas o pixeles en negro que hay dentro de las imagenes, debido a esto también podemos ver que las desviaciones estandar tienen valores bastante altos con respecto a las medias de intensidad en cada uno de los canales. Este script tiene la capacidad de almacenar los histogramas y medidas estadisticas obtenidas en una nueva carpeta de nombre `analisis_4_1_rgb` dentro del directorio de git principal.
 
 ### ✔️ 4.2 Número de colores por imagen
 - Conteo de colores únicos.
