@@ -1,0 +1,15 @@
+stages:
+  download_raw_data:
+    cmd: python scripts/data_acquisition/download_raw_data.py
+    deps:
+      - scripts/data_acquisition/download_raw_data.py
+    outs:
+      - data/raw
+
+  raw_to_intermediate:
+    cmd: python scripts/preprocessing/raw_to_npz.py
+    deps:
+      - scripts/preprocessing/raw_to_npz.py
+      - data/raw
+    outs:
+      - data/intermediate
