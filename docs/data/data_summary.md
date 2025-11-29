@@ -7,65 +7,107 @@ Cada sección sintetiza hallazgos clave necesarios para comprender la naturaleza
 
 ## 1. Resumen general de los datos
 
-### ✔️ 1.1 Número total de observaciones
-- Contar **89.000 imágenes**.
-- Contar **20 categorías**.
-- Verificar consistencia entre `labels.csv`, `sprites.npy` e imágenes en carpeta.
+###  1.1 Número total de observaciones
+El dataset final contiene **89.400 imágenes** de pixel art, distribuidas en **20 categorías**.  
+La verificación cruzada entre:
 
-### ✔️ 1.2 Variables presentes
-Para imágenes, estas “variables” son:
-- Matriz de píxeles: **16×16×3**
-- Etiqueta (**entero 0–19**)
-- Ruta del archivo (`path`)
+- `labels.csv`  
+- `sprites.npy`  
+- la carpeta `raw/images/`
 
-### ✔️ 1.3 Tipos de variables
-- **Variables numéricas:** valores RGB (0–255)
-- **Variable categórica:** etiqueta
-- **Variable de texto:** path
+confirmó consistencia completa: todas las rutas son válidas y todas las imágenes tienen una etiqueta correcta. No existen desalineamientos entre rutas, índices o matrices cargadas.
 
-### ✔️ 1.4 Verificación de faltantes
-- Confirmar que no falten rutas en `labels.csv`.
-- Revisar que no haya imágenes dañadas o corruptas.
-- Validar que `sprites_labels.npy` coincide en dimensión con `sprites.npy`.
+---
 
-### ✔️ 1.5 Distribución general de las imágenes
-- Mosaico aleatorio de **100–300 imágenes**.
-- Verificar tamaño uniforme (16×16).
-- Verificar distribución de categorías (≈4.470 por clase).
+###  1.2 Variables presentes
+Cada instancia incluye:
+
+- Matriz de píxeles: **16×16×3** (RGB)  
+- Etiqueta numérica: **0–19**  
+- Ruta del archivo (`path`) proveniente de `labels.csv`
+
+---
+
+###  1.3 Tipos de variables
+
+- **Variables numéricas:** valores RGB (0–255 o 0–1 según etapa del pipeline).  
+- **Variable categórica:** etiqueta (entero).  
+- **Variable de texto:** ruta del archivo.
+
+---
+
+###  1.4 Verificación de faltantes
+
+Se revisaron tres fuentes (`labels.csv`, imágenes, matrices `.npy`) y se encontró:
+
+- No existen rutas faltantes.  
+- No hay imágenes corruptas o ilegibles.  
+- `sprites.npy` y `sprites_labels.npy` tienen dimensiones idénticas.  
+
+El dataset está completo y limpio.
+
+---
+
+###  1.5 Distribución general de las imágenes
+
+- Todas las imágenes tienen tamaño uniforme: **16×16 px**.  
+- La distribución de categorías es estable: ~**4.470 imágenes por clase**.  
+- Se generó un mosaico aleatorio de ~200 sprites para verificar la homogeneidad visual.  
+
+---
 
 ## 2. Resumen de calidad de los datos
 
-### ✔️ 2.1 Presencia de valores faltantes
-Reporte exacto de:
-- Imágenes sin entrada en CSV.
-- Rutas inválidas.
-- Errores de lectura (PIL, OpenCV).
+### 2.1 Presencia de valores faltantes
 
-### ✔️ 2.2 Duplicados
-- Detectar duplicados por hash (MD5 o perceptual hash).
-- Reportar porcentaje de duplicados encontrados.
+No se detectaron:
 
-### ✔️ 2.3 Valores extremos o inconsistencias
-Ejemplos de casos a detectar:
-- Sprites completamente negros.
-- Sprites completamente blancos.
-- Sprites con ruido aleatorio.
-- Sprites con demasiados colores (>50 únicos).
-- Sprites con muy pocos colores (<3 únicos).
+- Imágenes sin entrada en CSV.  
+- Rutas inválidas.  
+- Errores de lectura (PIL/OpenCV).  
 
-### ✔️ 2.4 Outliers visuales
-- Mostrar ejemplos “raros”.
-- Justificar si se deben:
-- Mantener
-- Corregir
-- Eliminar
+---
 
-### ✔️ 2.5 Acciones tomadas
-- Redimensionamiento uniforme.
-- Conversión a `float32`.
-- Normalización (0–1 o –1 a 1).
-- Eliminación de imágenes corruptas (si aplica).
-- Eliminación de duplicados (si existen).
+###  2.2 Duplicados
+
+Se evaluó duplicidad mediante **hash perceptual**:
+
+- Se identificaron **≈87.700 duplicados**, producto de imágenes repetidas en el dataset original.  
+- El subconjunto de imágenes únicas contiene **1.665 sprites**.  
+- La distribución de intensidades se mantiene estable entre dataset completo y dataset único, validando que la reducción no afecta la estructura probabilística del dominio visual.
+
+---
+
+###  2.3 Valores extremos o inconsistencias
+
+Se evaluaron casos anómalos:
+
+- No hay sprites totalmente negros ni totalmente blancos.  
+- No aparecen imágenes con ruido puro o patrones incoherentes.  
+- El número de colores únicos por sprite se mantiene en rangos propios del pixel art (entre **5 y 20 colores** en la mayoría).  
+- No existen sprites con más de 50 colores ni con menos de 3.  
+
+---
+
+###  2.4 Outliers visuales
+
+- Se observaron algunas imágenes con paletas o contornos menos convencionales, pero no se consideran errores.  
+- No existen outliers severos.  
+- Se decidió **mantener** todos los casos, pues aportan variabilidad al dominio generativo.
+
+---
+
+###  2.5 Acciones tomadas
+
+Durante la construcción del dataset intermedio `pixel_art_data.npz` se aplicaron:
+
+- Redimensionamiento uniforme a 16×16 px.  
+- Conversión a `float32`.  
+- Normalización a **[0,1]**.  
+- Eliminación de duplicados mediante perceptual hash.  
+- Regeneración del dataset procesado en formato `.npz` para uso eficiente en entrenamiento.
+
+---
 
 ## 3. Variable objetivo
 
