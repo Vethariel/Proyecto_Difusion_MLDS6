@@ -1,5 +1,44 @@
-**/*__pycache__/*
-*.env
-env_vars*
-credentials*
-**/build/*
+# ==========================================
+# === GITIGNORE PARA PROYECTO TDSP + DVC ===
+# ==========================================
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+*.h5
+
+# --- Entornos ---
+.env
+.venv
+venv/
+env/
+
+# --- Editor ---
+.vscode/
+.idea/
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Datos (NO versionar archivos pesados en Git) ---
+data/
+reports/figures/
+!data/.gitkeep
+
+# --- Permitir que DVC controle los datos ---
+!*.dvc
+!.dvc/
+!.dvc/**
+.cache/
+!.gitignore
+
+# --- Modelos ---
+models/
+!models/.gitkeep
+
+# --- Notebooks (opcional) ---
+.ipynb_checkpoints/
