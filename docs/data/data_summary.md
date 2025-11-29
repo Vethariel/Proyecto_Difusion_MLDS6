@@ -92,8 +92,11 @@ Como resultado de la ejecución del script `3_2_distri_imagenes.py`, podemos con
 Los histogramas muestran que al utilizar las imagenes únicas, hay una disminución en la densidad de la intensidad representada por el negro, lo que es coherente con los resultados obtenidos en el caso anteior. También podemos ver que las imagenes promedio son similares para ambos conjuntos, ya que la disminución se da en una zona de las imagenes donde domina el negro.
 
 ### ✔️ 3.3 Variabilidad intra-clase
-- Mosaicos 5×5 por clase.
-- Comparación visual de ejemplos dentro de una misma categoría.
+<!-- - Mosaicos 5×5 por clase.
+- Comparación visual de ejemplos dentro de una misma categoría. -->
+Como resultado de la ejecución del script `3_3_variable_interclase.py`, podemos concluir lo siguiente.
+
+Con el fin de comprender  las caracteristicas visuales de algunas de las categorias se compara el contenidos de dos mosaicos de $5\times5$ para dos categorias ecogidas al azar. La falta de homogeneidad de los objetos observados dentro de cada uno de los mosaicos, dejan ver que hay algo de `lable noise` dentro de todas las categorias, aumentando la variabilidad intra clases en todas las categorias y exigiendo a futuro mayor capacidad por parte de los modelos que se vayan a implementar.
 
 ### ✔️ 3.4 Variabilidad global
 - **PCA** sobre vectores flattenizados (16×16×3 → 768 componentes).
