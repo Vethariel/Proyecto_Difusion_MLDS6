@@ -26,7 +26,6 @@ logs/
 
 # --- Datos (NO versionar archivos pesados en Git) ---
 data/
-reports/figures/
 !data/.gitkeep
 
 # --- Permitir que DVC controle los datos ---
