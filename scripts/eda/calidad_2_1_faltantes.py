@@ -1,3 +1,6 @@
+# EL objetivo de este script es validar que todas las imagenes tengan una etiqueta asignada, y que a su vez todas las etiquetas esten asignadas
+# a imagenes existentes. El código arroja la cantidad de etiquetas sin imagen y viceversa.
+
 import os
 import pandas as pd
 from PIL import Image, UnidentifiedImageError
