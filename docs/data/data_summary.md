@@ -164,7 +164,7 @@ La matriz aplanada resultante tiene dimensión 768 por imagen. Al aplicar PCA, o
 
 La siguiente figura muestra la curva completa de varianza acumulada:
 
-![Variance curve](../../reports/figures/eda/pca/variance_ratio.png)
+![Variance curve](reports/figures/eda/pca/variance_ratio.png)
 
 La curva crece con fuerza en los primeros componentes y luego se aplana, lo que indica que gran parte de la información está concentrada en pocas direcciones latentes. Esto revela un dataset altamente estructurado, con patrones visuales consistentes y poca variabilidad caótica.
 
@@ -178,19 +178,19 @@ Para evaluar el poder reconstructivo del PCA, se reconstruyó una imagen del dat
 
 El resultado conserva la forma general pero pierde detalle fino. Los colores se agrupan en bloques y la silueta es apenas perceptible:
 
-![k10](../../reports/figures/eda/pca/reconstruction_k10.png)
+![k10](reports/figures/eda/pca/reconstruction_k10.png)
 
 ##### Reconstrucción con 20 componentes
 
 La forma, proporciones y colores principales se restauran con mayor precisión. Se observan contornos más claros y sombras más coherentes:
 
-![k20](../../reports/figures/eda/pca/reconstruction_k20.png)
+![k20](reports/figures/eda/pca/reconstruction_k20.png)
 
 ##### Reconstrucción con 30 componentes
 
 A partir de 30 componentes, la reconstrucción es visualmente estable y muy cercana al original. El nivel de detalle recuperado es suficiente para preservar la identidad del sprite:
 
-![k30](../../reports/figures/eda/pca/reconstruction_k30.png)
+![k30](reports/figures/eda/pca/reconstruction_k30.png)
 
 ---
 
@@ -232,7 +232,7 @@ El análisis de varianza global muestra cuánta variabilidad aporta cada canal a
 
 El canal **B** emerge como el más variable y, por tanto, el más informativo. Esto sugiere que la mayor parte del contraste y cambio visual se encuentra en la dimensión azul del espacio RGB, probablemente debido al uso intensivo de tonos púrpuras, rosados y sombreados fríos característicos del dataset.
 
-![Varianza global](../../reports/figures/eda/color/global_variance.png)
+![Varianza global](reports/figures/eda/color/global_variance.png)
 
 ---
 
@@ -246,7 +246,7 @@ Al segmentar por clase, la variabilidad adquiere mayor significado:
 
 Esto respalda la hipótesis de que cada clase agrupa sprites provenientes de **diferentes fuentes o estilos artísticos**.
 
-![Varianza por clase](../../reports/figures/eda/color/variance_by_class.png)
+![Varianza por clase](reports/figures/eda/color/variance_by_class.png)
 
 ---
 
@@ -260,7 +260,7 @@ La métrica de **Hasler & Süsstrunk** aproxima la percepción humana del color 
 
 La Clase 1 destaca como el estilo más vibrante, mientras que las demás se mantienen más neutras o uniformes en saturación.
 
-![Colorfulness por clase](../../reports/figures/eda/color/colorfulness_by_class.png)
+![Colorfulness por clase](reports/figures/eda/color/colorfulness_by_class.png)
 
 ---
 
@@ -274,7 +274,7 @@ Se aplica PCA por canal para medir cuánta varianza captura el primer componente
 
 Nuevamente, el canal **B** es el que más información concentra, lo que coincide con todos los análisis anteriores.
 
-![PCA por canal](../../reports/figures/eda/color/pca_by_channel.png)
+![PCA por canal](reports/figures/eda/color/pca_by_channel.png)
 
 ---
 
@@ -324,11 +324,11 @@ La separabilidad entre clases en un dataset visual como este determina qué tan 
 
 Los mosaicos permiten observar la coherencia temática interna de cada etiqueta. Las clases humanoides mantienen proporciones y poses similares; las criaturas exhiben variaciones de color vibrante; frutas y vegetales presentan patrones redondeados; los ítems se distinguen por contornos geométricos y simetrías.
 
-![Class 0](../../reports/figures/eda/class_separability/label_grid_class0.png)
-![Class 1](../../reports/figures/eda/class_separability/label_grid_class1.png)
-![Class 2](../../reports/figures/eda/class_separability/label_grid_class2.png)
-![Class 3](../../reports/figures/eda/class_separability/label_grid_class3.png)
-![Class 4](../../reports/figures/eda/class_separability/label_grid_class4.png)
+![Class 0](reports/figures/eda/class_separability/label_grid_class0.png)
+![Class 1](reports/figures/eda/class_separability/label_grid_class1.png)
+![Class 2](reports/figures/eda/class_separability/label_grid_class2.png)
+![Class 3](reports/figures/eda/class_separability/label_grid_class3.png)
+![Class 4](reports/figures/eda/class_separability/label_grid_class4.png)
 
 ---
 
@@ -336,11 +336,11 @@ Los mosaicos permiten observar la coherencia temática interna de cada etiqueta.
 
 El promedio condensa las regiones cromáticas dominantes. Las clases humanoides (0 y 4) colapsan en siluetas simétricas; las criaturas (1) muestran masas difusas y verdes/azules; ítems (3) generan formas circulares sin detalle; frutas (2) forman manchas cálidas, coherentes con su paleta.
 
-![Mean 0](../../reports/figures/eda/class_separability/label_mean_class0.png)
-![Mean 1](../../reports/figures/eda/class_separability/label_mean_class1.png)
-![Mean 2](../../reports/figures/eda/class_separability/label_mean_class2.png)
-![Mean 3](../../reports/figures/eda/class_separability/label_mean_class3.png)
-![Mean 4](../../reports/figures/eda/class_separability/label_mean_class4.png)
+![Mean 0](reports/figures/eda/class_separability/label_mean_class0.png)
+![Mean 1](reports/figures/eda/class_separability/label_mean_class1.png)
+![Mean 2](reports/figures/eda/class_separability/label_mean_class2.png)
+![Mean 3](reports/figures/eda/class_separability/label_mean_class3.png)
+![Mean 4](reports/figures/eda/class_separability/label_mean_class4.png)
 
 ---
 
@@ -361,7 +361,7 @@ Pese a esto, las desviaciones estándar son amplias en todas las clases, anticip
 
 La proyección t-SNE confirma la intuición: las clases no forman grupos compactos. Los puntos se mezclan formando un gradiente continuo donde todos los tipos de sprites coexisten sin fronteras nítidas. Las clases sólo se distinguen en zonas muy pequeñas del espacio.
 
-![t-SNE](../../reports/figures/eda/class_separability/tsne_labels.png)
+![t-SNE](reports/figures/eda/class_separability/tsne_labels.png)
 
 Esta estructura dispersa indica que **la etiqueta de clase no está codificada linealmente en los píxeles**. Cualquier modelo que busque separar clases deberá aprender rasgos altamente no lineales.
 
@@ -372,7 +372,7 @@ Esta estructura dispersa indica que **la etiqueta de clase no está codificada l
 El puntaje silhouette cuantifica la cohesión intraclase y separación interclase.  
 Los resultados son negativos tanto en el espacio crudo como en PCA-50:
 
-![Silhouette](../../reports/figures/eda/class_separability/silhouette_scores.png)
+![Silhouette](reports/figures/eda/class_separability/silhouette_scores.png)
 
 Valores:
 - Raw pixels: **–0.051**
@@ -386,7 +386,7 @@ Un valor negativo implica que las instancias están más cerca de otras clases q
 
 K-means se ejecutó para `k=5` sin usar etiquetas. La matriz de confusión entre predicción de cluster y clase real confirma el solapamiento:
 
-![K-means confusion](../../reports/figures/eda/class_separability/confusion_clusters.png)
+![K-means confusion](reports/figures/eda/class_separability/confusion_clusters.png)
 
 Los clusters no corresponden a las clases originales. Algunas clases se dividen en varios clusters, y varios clusters contienen instancias múltiples de distintas etiquetas. Las métricas no supervisadas lo ratifican:
 
@@ -428,7 +428,7 @@ El objetivo no es obtener un modelo final, sino medir la **separabilidad visual 
 
 El modelo alcanza **≈100 % de accuracy en validación** desde muy temprano, lo que indica que las clases poseen patrones visuales extremadamente consistentes.
 
-![Accuracy](../../reports/figures/eda/aux_classifier/accuracy_curve.png)
+![Accuracy](reports/figures/eda/aux_classifier/accuracy_curve.png)
 
 ---
 
@@ -436,7 +436,7 @@ El modelo alcanza **≈100 % de accuracy en validación** desde muy temprano, lo
 
 La pérdida cae a casi cero en solo 1–2 épocas, reforzando el comportamiento de separabilidad fuerte entre clases.
 
-![Loss](../../reports/figures/eda/aux_classifier/loss_curve.png)
+![Loss](reports/figures/eda/aux_classifier/loss_curve.png)
 
 - **Loss final:** 0.00007  
 - **Accuracy final:** 100 %  
@@ -448,7 +448,7 @@ La pérdida cae a casi cero en solo 1–2 épocas, reforzando el comportamiento 
 La CNN clasifica *todas* las imágenes de validación correctamente.  
 La matriz es diagonal perfecta:
 
-![Confusion matrix](../../reports/figures/eda/aux_classifier/confusion_matrix.png)
+![Confusion matrix](reports/figures/eda/aux_classifier/confusion_matrix.png)
 
 Esto solo ocurre cuando los clusters visuales están extremadamente bien definidos.
 
