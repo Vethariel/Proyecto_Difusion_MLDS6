@@ -66,19 +66,30 @@ Ejemplos de casos a detectar:
 
 ## 3. Variable objetivo
 
-*(Adaptación del concepto para modelos de difusión)*
+<!-- *(Adaptación del concepto para modelos de difusión)*
 En modelos generativos **la variable objetivo es la propia imagen**:
-> x ~ p_data
+> x ~ p_data -->
+Los script que a los que se hace referencia en cada uno de los item analizados se encuentran dentro de `.\scripts\eda`
 
 ### ✔️ 3.1 Explicar por qué la variable objetivo es la imagen
-- No clasificamos.
+<!-- - No clasificamos.
 - No predecimos.
-- Buscamos **modelar la distribución completa de los datos**.
+- Buscamos **modelar la distribución completa de los datos**. -->
+
+Esta parte se analizo con ayuda del script `3_1_variable_objetivo.py`.
+
+Anteriormente se observo la posibilidad de que cada una de las imagenes puede identificarse con un hash el cual se puede utilizar para determinar que imagenes se parecen entre si, con lo que se pudieron determinar conjuntos de imagenes parecidas entre si, por lo que queremos ver como es el comportamiento de la distribución de intensidad tanto del conjunto original de imagenes como el de imagenes únicas. Al final de la ejecución podemos observar el histograma de la distribución de cada conjunto, junto a una imagen muy probable dentro del conjunto y otra de ruido poco probable dentro del mismo.
+
+Los graficos de densidades son muy similares entre si, siendo los valores de intensidad cercanos a cero los que acumulan la mayor parte de la densidad, dandonos a entender que en todas las imagenes el color negro o cercanos a este predomina sobre los demás. Además, la simiitud entre los histogramas implica que apezar de quedarse únicamente con las imagenes diferentes, la estructura probabilistica de la intensidad se mantiene entre los conjuntos. Esto nos permite mejorar los tiempos de procesamiento trabajando con el conjunto de imagenes únicas, habiendo pasado de $84.000$ a $1.665$.
 
 ### ✔️ 3.2 Distribución global de las imágenes
-- Histogramas promedio de colores.
+<!-- - Histogramas promedio de colores.
 - Distribución de intensidades por canal RGB.
-- Visualización del “promedio” por clase.
+- Visualización del “promedio” por clase. -->
+
+Como resultado de la ejecución del script `3_2_distri_imagenes.py`, podemos concluir lo siguiente.
+
+Los histogramas muestran que al utilizar las imagenes únicas, hay una disminución en la densidad de la intensidad representada por el negro, lo que es coherente con los resultados obtenidos en el caso anteior. También podemos ver que las imagenes promedio son similares para ambos conjuntos, ya que la disminución se da en una zona de las imagenes donde domina el negro.
 
 ### ✔️ 3.3 Variabilidad intra-clase
 - Mosaicos 5×5 por clase.
