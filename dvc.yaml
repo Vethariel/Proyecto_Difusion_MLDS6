@@ -13,3 +13,14 @@ stages:
       - data/raw
     outs:
       - data/intermediate
+      
+  eda:
+    cmd: python scripts/eda/run_eda.py
+    deps:
+      - scripts/eda/run_eda.py
+      - scripts/eda/modules/
+      - data/intermediate/pixel_art_data.npz
+    outs:
+      - reports/figures/eda/
+      - reports/metrics/eda.json
+
