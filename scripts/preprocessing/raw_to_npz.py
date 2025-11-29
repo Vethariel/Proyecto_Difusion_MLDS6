@@ -64,15 +64,26 @@ def normalize_images(images: np.ndarray):
 
     return images
 
+def convert_labels(labels_one_hot: np.ndarray):
+    """Convierte matriz one-hot (N×5) a vector entero (N,)."""
+    if labels_one_hot.ndim != 2:
+        raise ValueError("[ERROR] labels_one_hot debe tener forma (N, 5)")
 
-def save_npz(images, labels):
+    print("[INFO] Convirtiendo etiquetas one-hot a clases enteras...")
+    labels = np.argmax(labels_one_hot, axis=1).astype(np.int32)
+
+    print(f"[INFO] Etiquetas enteras: shape {labels.shape}, únicas: {np.unique(labels)}")
+    return labels
+
+def save_npz(images, labels, labels_one_hot):
     """Guarda el archivo .npz final."""
-    print(f"[INFO] Guardando archivo en {OUTPUT_FILE} ...")
+    print(f"[INFO] Guardando archivo final en {OUTPUT_FILE} ...")
 
     np.savez_compressed(
         OUTPUT_FILE,
         images=images,
-        labels=labels.astype(np.int32),
+        labels=labels,
+        labels_one_hot=labels_one_hot,
         metadata=f"Creado {datetime.utcnow()} UTC"
     )
 
@@ -84,11 +95,17 @@ def main():
 
     ensure_directory(INTERMEDIATE_DIR)
 
-    images, labels = load_raw_arrays()
+    # 1. Cargar datasets crudos
+    images, labels_one_hot = load_raw_arrays()
 
+    # 2. Normalizar imágenes
     images = normalize_images(images)
 
-    save_npz(images, labels)
+    # 3. Convertir etiquetas
+    labels = convert_labels(labels_one_hot)
+
+    # 4. Guardar en formato NPZ
+    save_npz(images, labels, labels_one_hot)
 
     print("\n=== COMPLETADO ===")
 

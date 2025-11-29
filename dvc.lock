@@ -23,11 +23,11 @@ stages:
       nfiles: 89404
     - path: scripts/preprocessing/raw_to_npz.py
       hash: md5
-      md5: 856fce7705a902c17feef3a7b0fcbdd5
-      size: 2585
+      md5: 613d56e37155dd8d8fde780e7efa45d9
+      size: 3304
     outs:
     - path: data/intermediate
       hash: md5
-      md5: ae0e17c9deb3460fb2291ded73adcb00.dir
-      size: 31086997
+      md5: bad4ad9338ba2a2f94ece25de192aa8a.dir
+      size: 31095630
       nfiles: 1
