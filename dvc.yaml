@@ -1,0 +1,26 @@
+stages:
+  download_raw_data:
+    cmd: python scripts/data_acquisition/download_raw_data.py
+    deps:
+      - scripts/data_acquisition/download_raw_data.py
+    outs:
+      - data/raw
+
+  raw_to_intermediate:
+    cmd: python scripts/preprocessing/raw_to_npz.py
+    deps:
+      - scripts/preprocessing/raw_to_npz.py
+      - data/raw
+    outs:
+      - data/intermediate
+      
+  eda:
+    cmd: python scripts/eda/run_eda.py
+    deps:
+      - scripts/eda/run_eda.py
+      - scripts/eda/modules/
+      - data/intermediate/pixel_art_data.npz
+    outs:
+      - reports/figures/eda/
+      - reports/metrics/eda.json
+
