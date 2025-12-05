@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from pathlib import Path
 
-from utils import update_eda_json
+from .utils import update_eda_json
 
 DATA_PATH = Path("data/intermediate/pixel_art_data.npz")
 FIG_DIR = Path("reports/figures/eda/color")
