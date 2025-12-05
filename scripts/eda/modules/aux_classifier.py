@@ -27,7 +27,7 @@ from sklearn.model_selection import train_test_split
 import tensorflow as tf
 from tensorflow.keras import layers, models
 
-from utils import update_eda_json
+from .utils import update_eda_json
 
 
 # =====================================================================

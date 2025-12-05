@@ -42,7 +42,7 @@ from sklearn.metrics import (
 )
 from sklearn.cluster import KMeans
 
-from utils import update_eda_json
+from .utils import update_eda_json
 
 
 # ----------------------------------------------------------------------

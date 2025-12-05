@@ -6,7 +6,7 @@ Ejecuta todos los análisis EDA en orden.
 from modules.pca_analysis import run_pca_analysis
 from modules.color_importance import run_color_importance
 from modules.class_separability import run_class_separability_analysis
-from modules.aux_classifier import run_aux_classifier_analysis
+from modules.aux_classifier import run_aux_classifier
 
 def main():
     print("=== Running 5.1 PCA Analysis ===")
@@ -19,7 +19,7 @@ def main():
     run_class_separability_analysis()
 
     print("=== Running 6.1 Auxiliary Classifier Analysis ===")
-    run_aux_classifier_analysis()
+    run_aux_classifier()
 
 if __name__ == "__main__":
     main()

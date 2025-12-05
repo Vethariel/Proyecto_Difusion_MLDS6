@@ -10,16 +10,16 @@ stages:
     outs:
     - path: data/raw
       hash: md5
-      md5: da9af08078f7a7c63aa5c8292b8f84fd.dir
-      size: 145537845
+      md5: 8b32a2bc5cd5ee4d4d815c4e97add54b.dir
+      size: 145537847
       nfiles: 89404
   raw_to_intermediate:
     cmd: python scripts/preprocessing/raw_to_npz.py
     deps:
     - path: data/raw
       hash: md5
-      md5: da9af08078f7a7c63aa5c8292b8f84fd.dir
-      size: 145537845
+      md5: 8b32a2bc5cd5ee4d4d815c4e97add54b.dir
+      size: 145537847
       nfiles: 89404
     - path: scripts/preprocessing/raw_to_npz.py
       hash: md5
@@ -28,6 +28,6 @@ stages:
     outs:
     - path: data/intermediate
       hash: md5
-      md5: bad4ad9338ba2a2f94ece25de192aa8a.dir
-      size: 31095630
+      md5: 175f90d9ce735949387b52b0fb4966f3.dir
+      size: 31095629
       nfiles: 1

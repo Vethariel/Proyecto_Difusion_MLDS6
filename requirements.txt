@@ -1,0 +1,84 @@
+# ============================
+# Core scientific libraries
+# ============================
+numpy
+pandas
+matplotlib
+seaborn
+scipy
+tqdm
+
+# ============================
+# Image processing
+# ============================
+Pillow
+# opencv-python   # SOLO si decides usar cv2 (no aparece en grep)
+
+# ============================
+# Machine Learning
+# ============================
+scikit-learn
+
+# ============================
+# Deep Learning (aux classifier)
+# ============================
+tensorflow  
+
+# ============================
+# Data versioning
+# ============================
+dvc
+
+# ============================
+# Experiment tracking
+# ============================
+mlflow
+
+# ============================
+# Kaggle integration
+# ============================
+kagglehub
+
+# ============================
+# Optional (EDA advanced)
+# ============================
+umap-learn    
+
+###########################################
+# OPTIONAL LIBRARIES FOR MODELING EXPERIMENTS
+###########################################
+
+# PyTorch (for CNN, AE, diffusion, ViT)
+torch
+torchvision
+torchaudio
+
+# Diffusion models (HuggingFace)
+diffusers
+transformers
+accelerate
+safetensors
+
+# FID / IS / KID
+clean-fid
+pytorch-fid
+
+# Data augmentation
+albumentations
+imgaug
+
+# Vision Transformers & advanced architectures
+timm
+
+# Probabilistic modeling
+pyro-ppl
+
+# Image processing advanced
+scikit-image
+
+# Training and logging tools
+tensorboard
+lightning
+
+# (Optional) Another experiment-tracking alternative
+wandb
