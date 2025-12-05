@@ -46,7 +46,7 @@ Se ejecutaron cinco experimentos principales:
   - Lectura: el espacio latente es mas complejo; sin metricas comparables no se puede declarar ganador.
 
 - Exp5 — Ablation T=50  
-  - train_loss: 0.222 (epoch 6/15).  
+  - train_loss: 0.189  
   - Lectura: reducir T acelera, pero sacrifica calidad; no supera al DDPM estandar.
 
 ### Hallazgos clave
