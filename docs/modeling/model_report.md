@@ -2,210 +2,68 @@
 
 ## Resumen Ejecutivo
 
-Este proyecto tuvo como objetivo comparar diferentes arquitecturas generativas —Autoencoders, DDPM en pixel space, DDPM condicional, Latent Diffusion y un experimento de ablation— para identificar cuál modelo produce imágenes sintéticas con la mayor fidelidad perceptual respecto a la distribución original.
+- Objetivo: comparar Autoencoders, DDPM en pixel space, DDPM condicional, Latent Diffusion y una ablation (T=50) para elegir el generador con mayor fidelidad perceptual.
+- Mejor modelo: DDPM Condicional (Exp3) con FID-like promedio ~19.2, estable entre clases y coherente con la teoria al usar la clase como guia de denoising.
+- Decisiones clave: incorporar conditioning por class_id mejora la calidad visual y la convergencia; el DDPM estandar es un buen baseline pero queda detras al no usar informacion semantica.
+- Uso final: el modelo seleccionado captura mejor la estructura por clase y se mantiene estable durante el entrenamiento, por lo que se adopta como version final.
 
-Los resultados experimentales muestran que el DDPM Condicional entregó el mejor desempeño global, obteniendo un FID-like promedio cercano a 19.2, superando al DDPM no condicional (21.85) y mostrando estabilidad entre clases. Este comportamiento confirma que incorporar información semántica (class_id) durante el proceso de denoising mejora la calidad visual y la convergencia del modelo.
+## Planteamiento del Problema
 
-El DDPM Condicional se selecciona como modelo final, tanto por su desempeño cuantitativo como por su coherencia teórica y su capacidad demostrada para capturar características estructurales de las distintas clases del dataset.
-
-## Descripción del Problema
-
-El problema central consiste en generar imágenes sintéticas de alta calidad que respeten la estructura estadística del conjunto de datos original. Esto requiere modelos capaces de aproximar la distribución de probabilidad de las imágenes, manteniendo coherencia visual, diversidad y fidelidad al dominio.
+Generar imagenes sinteticas de alta calidad requiere aproximar la distribucion de los datos originales, manteniendo coherencia visual, diversidad y consistencia por clase. El reto es elegir un modelo que pueda revertir un proceso de ruido progresivo y recuperar imagenes que se perciban realistas.
 
 ### Contexto
 
-La generación de imágenes mediante modelos de difusión se ha convertido en el paradigma dominante en inteligencia artificial, desplazando a modelos como GANs en estabilidad y calidad. Estos modelos aplican un proceso progresivo de adición de ruido y un proceso inverso entrenado para revertirlo, generando nuevas imágenes desde ruido puro.
+El trabajo se enmarca en modelos de difusion, hoy el paradigma dominante frente a GANs por estabilidad y calidad. Se evaluaron diferencias entre reconstruccion (Autoencoder) y generacion (DDPM), el impacto de entrenar en pixel space vs latent space, el rol del conditioning, el numero de pasos de ruido (T) y el comportamiento del loss bajo distintas arquitecturas.
 
-El proyecto se desarrolla dentro de ese marco, evaluando:
+## Modelo Seleccionado: DDPM Condicional (Exp3)
 
-diferencias entre reconstrucción (Autoencoders) y generación (DDPMs),
+El modelo es un Denoising Diffusion Probabilistic Model con embedding de clase que modula todo el U-Net para guiar la prediccion de ruido.
 
-impacto de entrenar en pixel space vs latent space,
+- Flujo de difusion: T = 300 pasos de ruido gaussiano hasta aproximar una normal estandar.
+- Proceso inverso: U-Net entrenada para predecir el ruido en cada paso; su precision determina que tan bien se reconstruye desde ruido puro.
+- Conditioning: embedding de clase inyectado en varios niveles del U-Net (modulacion tipo FiLM o concatenacion residual) para generar imagenes especificas por categoria.
+- Hiperparametros: learning_rate = 2e-4, batch_size = 256, epochs = 50, conditioning = class_id.
+- Objetivo de entrenamiento: MSE sobre la prediccion de ruido.
 
-rol del conditioning para guiar el proceso de generación,
+## Evaluacion Comparativa
 
-efecto del número de pasos de ruido (T),
+Se ejecutaron cinco experimentos principales:
 
-comportamiento del loss durante diferentes configuraciones arquitectónicas.
+- Exp1 — Autoencoder / Denoising Autoencoder  
+  - SSIM: 0.949; PSNR: 24.82; MSE: 0.0043.  
+  - Lectura: excelente reconstruccion, pero no genera nuevas imagenes.
 
-Objetivos específicos
+- Exp2 — DDPM en Pixel Space  
+  - FID-like: 21.85; train_loss: 0.088.  
+  - Lectura: generador estable y de buena calidad, pero sin condicionamiento queda por detras.
 
-Desarrollar y entrenar múltiples modelos generativos.
+- Exp3 — DDPM Condicional (modelo final)  
+  - FID-like por clase: 0: 19.12, 1: 16.89, 2: 17.39, 3: 20.83, 4: 21.93. Promedio ~19.2.  
+  - Lectura: mejor resultado global; el conditioning captura mejor la estructura intra-clase y estabiliza el denoising.
 
-Evaluar su desempeño mediante métricas perceptuales.
+- Exp4 — Latent Diffusion  
+  - Loss: 0.6203.  
+  - Lectura: el espacio latente es mas complejo; sin metricas comparables no se puede declarar ganador.
 
-Comparar cuantitativa y cualitativamente los resultados.
+- Exp5 — Ablation T=50  
+  - train_loss: 0.222 (epoch 6/15).  
+  - Lectura: reducir T acelera, pero sacrifica calidad; no supera al DDPM estandar.
 
-Seleccionar el mejor modelo según evidencia experimental.
+### Hallazgos clave
 
-Documentar de manera interpretativa y técnica los hallazgos.
-
-### Justificación
-
-Generar imágenes sintéticas de calidad requiere capturar dependencias complejas entre pixeles y patrones de clase. Elegir el modelo adecuado permite no solo producir mejores resultados, sino también entender los mecanismos que hacen que ciertos modelos generalicen mejor. Esto es clave para aplicaciones futuras como generación condicionada, simulación de datos o estudios de ablation para optimización computacional.
-
-## Descripción del Modelo
-
-El modelo seleccionado fue el DDPM Condicional (Exp3). Se trata de un Denoising Diffusion Probabilístico Model que incorpora un embedding de clase que modula el proceso de denoising a lo largo de toda la arquitectura.
-
-Metodología del modelo
-
-El modelo sigue dos procesos fundamentales:
-
-Difusión hacia adelante (q)
-Se añade ruido gaussiano progresivamente durante T = 300 pasos hasta aproximar una distribución normal estándar.
-
-Proceso inverso (p)
-Una red neuronal U-Net es entrenada para predecir el ruido añadido en cada paso. Su precisión determina qué tan bien puede reconstruir una imagen desde ruido puro.
-
-Condicionamiento
-
-El condicionamiento se realiza mediante un embedding de clase, que se injerta en diferentes niveles del U-Net, guiando la predicción del ruido. Esto permite que el modelo genere imágenes específicas de cada categoría de manera más precisa que un DDPM no condicional.
-
-Hiperparámetros principales
-
-T = 300
-
-learning_rate = 0.0002
-
-batch_size = 256
-
-epochs = 50
-
-conditioning = class_id
-
-Arquitectura
-
-Backbone: U-Net ligera pero eficiente para datasets de baja resolución.
-
-Mecanismo de conditioning: modulación tipo FiLM o concatenación en bloques residuales.
-
-Objetivo de entrenamiento: error en la predicción del ruido (MSE).
-
-## Evaluación del Modelo
-
-Se evaluaron cinco experimentos principales:
-
-Autoencoder / Denoising Autoencoder (Exp1)
-
-DDPM en Pixel Space (Exp2)
-
-DDPM Condicional (Exp3)
-
-Latent Diffusion (Exp4)
-
-DDPM Ablation T=50 (Exp5)
-
-Resultados cuantitativos
-
-Exp1 – AE/DAE
-
-SSIM: 0.949
-
-PSNR: 24.82
-
-MSE: 0.0043
-
-Interpretación: excelente reconstrucción, pero no genera nuevas imágenes.
-
-Exp2 – DDPM PixelSpace
-
-FID-like: 21.85
-
-train_loss: 0.088
-
-Interpretación: generador estable y de buena calidad, pero todavía superado por modelos condicionados.
-
-Exp3 – DDPM Condicional (modelo final)
-FID-like por clase:
-
-clase 0 → 19.12
-
-clase 1 → 16.89
-
-clase 2 → 17.39
-
-clase 3 → 20.83
-
-clase 4 → 21.93
-
-Promedio ≈ 19.2
-
-Interpretación:
-Es el mejor resultado entre todos los experimentos. La ganancia en FID-like demuestra que el conditioning permite capturar mejor la estructura intra-clase y estabiliza el proceso de denoising.
-
-Exp4 – Latent Diffusion
-
-Loss: 0.6203
-
-Interpretación:
-El loss es más alto porque se entrena en un espacio latente más complejo. No hay métricas comparables, por lo que no puede considerarse ganador.
-
-Exp5 – Ablation T=50
-
-train_loss: 0.222 (epoch 6/15)
-
-Interpretación:
-Reducir T acelera el modelo, pero sacrifica calidad. A mitad de entrenamiento ya es evidente que no superará al DDPM estándar.
-
-Conclusión de la evaluación
-
-El DDPM Condicional supera al resto de modelos en:
-
-calidad perceptual,
-
-control sobre la clase generada,
-
-estabilidad del entrenamiento,
-
-métricas FID-like por clase.
+- El conditioning por clase reduce FID-like y mejora la coherencia visual.
+- El DDPM estandar es un baseline solido pero insuficiente sin señal semantica.
+- Latent Diffusion requiere evaluacion adicional con metricas comparables.
+- Acelerar con menos pasos (T=50) degrada perceptual notablemente.
 
 ## Conclusiones y Recomendaciones
 
-Conclusiones principales
-
-El DDPM Condicional fue el mejor modelo, con el FID-like más bajo y la mejor coherencia entre clases.
-
-Incorporar conditioning mejora notablemente el modelado de la distribución.
-
-Los autoencoders son buenos reconstructores, pero no compiten como generadores.
-
-El DDPM estándar es un baseline sólido pero inferior.
-
-Latent Diffusion requiere evaluación adicional para ser comparable.
-
-Puntos fuertes del modelo final
-
-Calidad perceptual superior.
-
-Mejor capacidad de generación específica por clase.
-
-Estabilidad durante el entrenamiento.
-
-Limitaciones
-
-Mayor costo computacional.
-
-El conditioning por clase no escala bien a datasets grandes sin embeddings más sofisticados.
-
-Se requiere evaluación visual más amplia para asegurar diversidad y ausencia de colapso.
-
-Recomendaciones
-
-Implementar Classifier-Free Guidance para mejorar el control semántico.
-
-Entrenar un U-Net más profundo para mejorar el FID-like.
-
-Replicar el DDPM Condicional en Latent Space para comparar desempeño y eficiencia.
-
-Evaluar con FID real (no reducido a PCA) si se dispone de recursos.
-
-## Referencias
-
-Ho, J., Jain, A., & Abbeel, P. (2020). Denoising Diffusion Probabilistic Models.
-
-Dhariwal, P., & Nichol, A. (2021). Diffusion Models Beat GANs on Image Synthesis.
-
-Kingma, D. P., & Welling, M. (2013). Auto-Encoding Variational Bayes.
-
-Documentación complementaria y repositorios utilizados en el proyecto.
+- El DDPM Condicional ofrece la mejor calidad perceptual y estabilidad entre clases, por lo que se adopta como modelo final.
+- Los autoencoders son utiles para reconstruccion, pero no compiten como generadores.
+- El conditioning es el factor que marca la diferencia en fidelidad y control por clase.
+- Limitaciones: mayor costo computacional y escalabilidad limitada del conditioning simple para datasets grandes.
+- Recomendaciones proximas:
+  1) Implementar Classifier-Free Guidance para mayor control semantico.  
+  2) Probar un U-Net mas profundo para seguir mejorando FID-like.  
+  3) Replicar el DDPM Condicional en latent space para comparar eficiencia.  
+  4) Evaluar con FID completo (no reducido a PCA) si hay recursos de calculo.
