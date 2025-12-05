@@ -2,7 +2,9 @@ import kagglehub
 import shutil
 import os
 
-# 1. Descargar el dataset (Esto baja todas las imágenes a la caché de Kagglehub)
+# 1. Descargar el dataset
+# Esto baja todas las imágenes a la caché de Kagglehub
+#
 # Devuelve la ruta donde se descargaron los archivos
 print("Descargando dataset desde Kaggle...")
 path_descarga = kagglehub.dataset_download("ebrahimelgazar/pixel-art")

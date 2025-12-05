@@ -1,0 +1,33 @@
+schema: '2.0'
+stages:
+  download_raw_data:
+    cmd: python scripts/data_acquisition/download_raw_data.py
+    deps:
+    - path: scripts/data_acquisition/download_raw_data.py
+      hash: md5
+      md5: 6207efa7a3a21c9d9d02e7d329accf00
+      size: 2689
+    outs:
+    - path: data/raw
+      hash: md5
+      md5: da9af08078f7a7c63aa5c8292b8f84fd.dir
+      size: 145537845
+      nfiles: 89404
+  raw_to_intermediate:
+    cmd: python scripts/preprocessing/raw_to_npz.py
+    deps:
+    - path: data/raw
+      hash: md5
+      md5: da9af08078f7a7c63aa5c8292b8f84fd.dir
+      size: 145537845
+      nfiles: 89404
+    - path: scripts/preprocessing/raw_to_npz.py
+      hash: md5
+      md5: 613d56e37155dd8d8fde780e7efa45d9
+      size: 3304
+    outs:
+    - path: data/intermediate
+      hash: md5
+      md5: bad4ad9338ba2a2f94ece25de192aa8a.dir
+      size: 31095630
+      nfiles: 1
