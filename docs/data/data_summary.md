@@ -23,7 +23,7 @@ confirmó consistencia completa: todas las rutas son válidas y todas las imáge
 Cada instancia incluye:
 
 - Matriz de píxeles: **16×16×3** (RGB)  
-- Etiqueta numérica: **0–19**  
+- Etiqueta numérica: **0–5**  
 - Ruta del archivo (`path`) proveniente de `labels.csv`
 
 ---
