@@ -48,11 +48,8 @@ El dataset está completo y limpio.
 
 ---
 
-###  1.5 Distribución general de las imágenes
-
-- Todas las imágenes tienen tamaño uniforme: **16×16 px**.  
-- La distribución de categorías es estable: ~**4.470 imágenes por clase**.  
-- Se generó un mosaico aleatorio de ~200 sprites para verificar la homogeneidad visual.  
+### ✔️ 1.5 Distribución general de las imágenes
+- Mosaico aleatorio de **100–300 imágenes**.  
 
 ---
 
