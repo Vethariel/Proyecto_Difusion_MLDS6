@@ -100,10 +100,19 @@ class TimestepEmbedding(layers.Layer):
         return emb
 
 
+class SplitScaleShift(layers.Layer):
+    """Deterministic split to replace Lambda(tf.split) for safer serialization."""
+    def call(self, x: tf.Tensor):
+        scale, shift = tf.split(x, 2, axis=-1)
+        return scale, shift
+
+    def get_config(self):
+        return super().get_config()
+
+
 def film_condition(cond: tf.Tensor, channels: int) -> Tuple[tf.Tensor, tf.Tensor]:
     h = layers.Dense(channels * 2)(cond)
-    # Use Keras split to stay in symbolic graph
-    scale, shift = layers.Lambda(lambda x: tf.split(x, 2, axis=-1))(h)
+    scale, shift = SplitScaleShift()(h)
     return layers.Reshape((1, 1, channels))(scale), layers.Reshape((1, 1, channels))(shift)
 
 
@@ -225,10 +234,9 @@ def train():
         optimizer.apply_gradients(zip(grads, model.trainable_variables))
         return loss
 
-    steps_per_epoch = len(images) // BATCH_SIZE
     for epoch in range(1, EPOCHS + 1):
         losses = []
-        for step, (x_batch, c_batch) in enumerate(ds):
+        for _, (x_batch, c_batch) in enumerate(ds):
             loss = train_step(x_batch, c_batch)
             losses.append(loss.numpy())
             ema.update(model)

@@ -19,7 +19,11 @@ from tensorflow.keras import layers, models
 # -----------------------------------------------------------------------------#
 DATA_PATH = Path("data/intermediate/pixel_art_data.npz")
 MODEL_AD3 = Path("data/models/ddpm_conditional.keras")
-MODEL_AD6 = Path("data/models/ddpm_resunet_ad6_ema.keras")  # use EMA for sampling
+MODEL_AD6_CANDIDATES = [
+    Path("data/models/ddpm_resunet_ad6_ema.keras"),
+    Path("data/models/ddpm_resunetema.keras"),
+    Path("data/models/ddpm_resunet_ad6.keras"),  # non-EMA fallback
+]
 SCHEDULE_AD6 = Path("data/models/schedule_ad6.npz")
 OUT_JSON = Path("artifacts_exp6/compare_ad3_ad6.json")
 OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
@@ -56,6 +60,15 @@ class TimestepEmbedding(layers.Layer):
         config = super().get_config()
         config.update({"dim": self.dim})
         return config
+
+
+class SplitScaleShift(layers.Layer):
+    def call(self, x: tf.Tensor):
+        scale, shift = tf.split(x, 2, axis=-1)
+        return scale, shift
+
+    def get_config(self):
+        return super().get_config()
 
 
 def compute_feature_fid(real_imgs: np.ndarray, gen_imgs: np.ndarray, n_components: int = PCA_COMPONENTS) -> float:
@@ -128,10 +141,14 @@ alphas_cumprod_ad6 = schedule_ad6["alphas_cumprod"]
 
 def load_ad6() -> tf.keras.Model:
     # AD6 uses Lambda layers; allow unsafe deserialization when loading a trusted local file.
+    path = next((p for p in MODEL_AD6_CANDIDATES if p.exists()), None)
+    if path is None:
+        raise FileNotFoundError(f"Trained AD6 model not found. Checked: {MODEL_AD6_CANDIDATES}")
     return models.load_model(
-        MODEL_AD6,
-        custom_objects={"TimestepEmbedding": TimestepEmbedding},
+        path,
+        custom_objects={"TimestepEmbedding": TimestepEmbedding, "SplitScaleShift": SplitScaleShift},
         safe_mode=False,
+        compile=False,
     )
 
 
