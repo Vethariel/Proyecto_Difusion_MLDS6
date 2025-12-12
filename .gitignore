@@ -25,7 +25,9 @@ env/
 logs/
 
 # --- Datos (NO versionar archivos pesados en Git) ---
-data/
+data/raw/images/
+data/raw/labels.csv
+data/raw/metadata.txt
 !data/.gitkeep
 
 # --- Permitir que DVC controle los datos ---
@@ -39,7 +41,6 @@ data/
 !.gitignore
 
 # --- Modelos ---
-models/
 !models/.gitkeep
 
 # --- Notebooks (opcional) ---
