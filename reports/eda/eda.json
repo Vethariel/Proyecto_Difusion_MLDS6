@@ -4,7 +4,7 @@
         "flat_dim": 768,
         "variance_first_component": 0.12129306048154831,
         "variance_first_10": 0.4688391387462616,
-        "variance_first_20": 0.5959593653678894,
+        "variance_first_20": 0.5959594249725342,
         "variance_curve_file": "reports\\figures\\eda\\pca\\variance_ratio.png",
         "reconstruction_files": {
             "k10": "reports\\figures\\eda\\pca\\reconstruction_k10.png",
@@ -53,14 +53,14 @@
             "4": 0.22773627936840057
         },
         "pca_channel_importance": {
-            "R": 0.17406600713729858,
-            "G": 0.15636949241161346,
-            "B": 0.18478849530220032
+            "R": 0.17406605184078217,
+            "G": 0.15636953711509705,
+            "B": 0.1847885698080063
         },
         "ranking": {
-            "R": 0.30437546968460083,
-            "G": 0.2830548882484436,
-            "B": 0.36199790239334106
+            "R": 0.3043755292892456,
+            "G": 0.2830549478530884,
+            "B": 0.36199796199798584
         },
         "figure_files": {
             "global_variance": "reports\\figures\\eda\\color\\global_variance.png",
@@ -75,7 +75,7 @@
         "train_size": 71520,
         "val_size": 17880,
         "accuracy_last_epoch": 1.0,
-        "loss_last_epoch": 7.127632852643728e-05,
+        "loss_last_epoch": 6.54137329547666e-05,
         "figure_files": {
             "accuracy_curve": "reports\\figures\\eda\\aux_classifier\\accuracy_curve.png",
             "loss_curve": "reports\\figures\\eda\\aux_classifier\\loss_curve.png",
@@ -251,6 +251,230 @@
                     3350
                 ]
             ]
+        }
+    },
+    "summary_general": {
+        "raw_paths": {
+            "sprites_npy": "data\\raw\\sprites.npy",
+            "sprites_labels_npy": "data\\raw\\sprites_labels.npy",
+            "labels_csv": "data\\raw\\labels.csv",
+            "images_dir": "data\\raw\\images\\images"
+        },
+        "counts": {
+            "n_sprites_npy": 89400,
+            "n_sprites_labels_npy": 89400,
+            "n_labels_csv_rows": 89400,
+            "n_image_files": 89400
+        },
+        "image_shape": [
+            16,
+            16,
+            3
+        ],
+        "dtypes": {
+            "sprites": "uint8",
+            "sprites_labels": "float64"
+        },
+        "pixel_range": {
+            "min": 0,
+            "max": 255
+        },
+        "labels": {
+            "n_classes_inferred": 5,
+            "class_counts": {
+                "0": 8000,
+                "1": 32400,
+                "2": 6000,
+                "3": 35000,
+                "4": 8000
+            },
+            "encoding": "one_hot"
+        },
+        "consistency_checks": {
+            "sample_path_checks": {
+                "checked": 500,
+                "missing": 0,
+                "examples": []
+            }
+        },
+        "figures": {
+            "mosaic_300": "reports\\figures\\eda\\summary_general\\mosaic_300.png"
+        }
+    },
+    "data_quality": {
+        "csv_missing_values": {
+            "Image Index": 0,
+            "Image Path": 0,
+            "Label": 0
+        },
+        "array_nan_count": 0,
+        "disk_read_sample_check": {
+            "checked": 500,
+            "errors": 0,
+            "examples": []
+        },
+        "duplicates_exact_pixel_hash": {
+            "total_images": 89400,
+            "unique_images": 1722,
+            "duplicate_images": 87678,
+            "duplicate_percentage": 98.0738255033557,
+            "top_duplicate_group_sizes": {
+                "group_1": 100,
+                "group_2": 100,
+                "group_3": 100,
+                "group_4": 100,
+                "group_5": 100
+            }
+        },
+        "extremes": {
+            "all_black_images": 0,
+            "all_white_images": 0
+        },
+        "figures": {
+            "mean_intensity_hist": "reports\\figures\\eda\\data_quality\\mean_intensity_hist.png"
+        }
+    },
+    "target_variable": {
+        "n_samples_used": 2000,
+        "figures": {
+            "target_variable": "reports\\figures\\eda\\target_variable\\target_variable.png"
+        }
+    },
+    "intraclass_variability": {
+        "seed": 18,
+        "classes_compared": [
+            1,
+            3
+        ],
+        "figure_file": "reports\\figures\\eda\\variability\\intraclass_mosaic_seed18.png"
+    },
+    "rgb_stats": {
+        "global_stats": {
+            "R": {
+                "mean": 176.3635040897651,
+                "std": 97.3757069552678,
+                "min": 0.0,
+                "q1": 81.0,
+                "median": 250.0,
+                "q3": 255.0,
+                "max": 255.0
+            },
+            "G": {
+                "mean": 172.59866995246085,
+                "std": 96.56583102777319,
+                "min": 0.0,
+                "q1": 80.0,
+                "median": 235.0,
+                "q3": 255.0,
+                "max": 255.0
+            },
+            "B": {
+                "mean": 165.54661720497762,
+                "std": 102.19248547384869,
+                "min": 0.0,
+                "q1": 57.0,
+                "median": 244.0,
+                "q3": 255.0,
+                "max": 255.0
+            }
+        },
+        "by_class": {
+            "0": {
+                "mean_rgb": [
+                    173.774560546875,
+                    164.02529296875,
+                    157.808642578125
+                ]
+            },
+            "1": {
+                "mean_rgb": [
+                    171.9150752314815,
+                    179.99828800154322,
+                    173.10790412808643
+                ]
+            },
+            "2": {
+                "mean_rgb": [
+                    215.08541666666667,
+                    194.39850260416668,
+                    177.66119791666668
+                ]
+            },
+            "3": {
+                "mean_rgb": [
+                    172.80628348214285,
+                    163.39717633928572,
+                    157.4928125
+                ]
+            },
+            "4": {
+                "mean_rgb": [
+                    183.489990234375,
+                    175.11025390625,
+                    168.81083984375
+                ]
+            }
+        },
+        "figures": {
+            "rgb_global_histograms": "reports\\figures\\eda\\rgb\\rgb_global_histograms.png",
+            "rgb_class_means": "reports\\figures\\eda\\rgb\\rgb_class_means.png"
+        },
+        "pixel_sample_for_hist": 1000000
+    },
+    "palette_stats": {
+        "n_samples_used": 8000,
+        "palette_class_thresholds": {
+            "low_max": 32,
+            "mid_max": 128
+        },
+        "palette_class_counts": {
+            "High_Palette (>128)": 2090,
+            "Low_Palette (<=32)": 5277,
+            "Mid_Palette (33-128)": 633
+        },
+        "unique_color_count_summary": {
+            "min": 3,
+            "max": 227,
+            "mean": 60.51575,
+            "median": 17.0,
+            "p25": 8.0,
+            "p75": 132.0
+        },
+        "threshold_checks": {
+            "lt_3_colors": 0,
+            "gt_50_colors": 2684,
+            "gt_128_colors": 2090
+        },
+        "by_class_summary": {
+            "0": {
+                "n": 757,
+                "mean": 20.653896961690887,
+                "median": 21.0
+            },
+            "1": {
+                "n": 2889,
+                "mean": 145.6053997923157,
+                "median": 153.0
+            },
+            "2": {
+                "n": 544,
+                "mean": 5.334558823529412,
+                "median": 5.0
+            },
+            "3": {
+                "n": 3105,
+                "mean": 9.155555555555555,
+                "median": 9.0
+            },
+            "4": {
+                "n": 705,
+                "mean": 23.41418439716312,
+                "median": 23.0
+            }
+        },
+        "figures": {
+            "palette_hist": "reports\\figures\\eda\\palette\\palette_hist.png",
+            "palette_boxplot_by_class": "reports\\figures\\eda\\palette\\palette_boxplot_by_class.png"
         }
     }
 }

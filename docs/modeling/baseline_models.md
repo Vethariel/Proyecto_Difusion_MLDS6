@@ -1,433 +1,225 @@
-# Reporte de Modelos Generativos (Baseline y Variantes Difusivas)
+# Reporte de modelos generativos (baselines y variantes de difusión)
 
-Entrenamos los siguientes cinco modelos:
+Este documento describe los experimentos AD1–AD5 siguiendo la idea original del proyecto: construir una **línea evolutiva** de modelos (desde un baseline simple hasta difusión condicionada y variantes), con hipótesis claras y evidencia cuantitativa registrada en MLflow (`mlflow.db`).
 
-1. **Modelo 1:** Autoencoder / Denoising Autoencoder (baseline no difusivo)  
-2. **Modelo 2:** Diffusion en espacio de píxeles (DDPM baseline, sin condición de clase)  
-3. **Modelo 3:** Diffusion condicionada por clase (Class-conditional DDPM)  
-4. **Modelo 4:** Diffusion en espacio latente (Latent Diffusion “chiquito”)  
-5. **Modelo 5:** Ablación sobre ruido / pasos / capacidad del modelo  
+## 1. Idea original (propósito de cada experimento)
 
-El objetivo general es comparar un baseline generativo simple (autoencoder) frente a distintos modelos de difusión, evaluando su capacidad para reconstruir y generar sprites 16×16×3, así como entender qué hiperparámetros tienen mayor impacto en la calidad de las muestras.
+La estrategia de modelamiento se diseñó como un “escalado” de complejidad:
 
----
+1. **Exp1 – Autoencoder / Denoising Autoencoder (baseline no difusivo):** establecer una referencia de reconstrucción (qué tan bien un modelo simple representa el dataset) y obtener un encoder reutilizable para explorar difusión en latente.
+2. **Exp2 – DDPM en pixel-space (unconditional):** entrenar un difusor sin condicionamiento para aprender la distribución global de sprites (“océano de sprites”).
+3. **Exp3 – DDPM condicionado por clase (AD3):** incorporar `class_id` para mejorar coherencia por clase y evitar mezcla de estilos; aprovechar la alta separabilidad observada en EDA.
+4. **Exp4 – Latent Diffusion (LDM-lite):** probar la hipótesis de eficiencia: si el espacio latente es compacto, la difusión podría converger más rápido sin degradar calidad.
+5. **Exp5 – Ablación (T/capacidad):** cuantificar qué hiperparámetros realmente importan (número de pasos y tamaño del denoiser) y el trade-off calidad vs costo.
 
-## Modelo 1: Autoencoder / Denoising Autoencoder (Baseline no difusivo)
+## 2. Tracking y fuente de verdad (MLflow)
 
-### Descripción del modelo
+Los resultados se consolidan desde `mlflow.db`. Para cada experimento se reporta el **mejor run FINISHED**, seleccionado por su métrica primaria (↓ mejor). Cuando una corrida terminó en FAILED pero dejó métricas registradas, se reporta explícitamente como evidencia incompleta.
 
-El **baseline** es un **autoencoder convolucional** que toma imágenes de entrada de tamaño 16×16×3 y las comprime a un espacio latente de baja dimensión, para luego reconstruirlas:
+### 2.1 Resumen comparativo (mejores runs en MLflow)
 
-- **Encoder**:  
-  - Input: 16×16×3  
-  - 2–3 bloques Conv2D + ReLU + MaxPool  
-  - Proyección a un vector latente de dimensión reducida (por ejemplo, 32 o 64).
-- **Decoder**:  
-  - Bloques ConvTranspose2D / Upsampling  
-  - Reconstrucción a 16×16×3.
+| Exp | Experimento | Métrica primaria (↓ mejor) | Mejor valor | Run |
+|---:|---|---:|---:|---|
+| 1 | Exp1-Autoencoder | `val_loss` | 0.005559 | `ac2d65bbeb9f48df9131fc49f3359f2a` |
+| 2 | Exp2-DDPM-PixelSpace | `fid_like_pca20` | 21.8536 | `0fa38124710c42428d04bf583ec74120` |
+| 3 | Exp3-DDPM-Conditional | avg(`fid_like_class_*`) | 19.2371 | `c0ac7d681d664f62a1d31084292199ef` |
+| 4 | Exp4-LatentDiffusion | `loss` | 0.6203 | `158876ba6a9943379beac92117161f5e` |
+| 5 | Exp5-Ablation_Scientific | `feature_fid` | 345.7668 | `72576899bd3c43fe8264d504c4ebd802` (FAILED) |
 
-Variante: **denoising autoencoder**, donde se agrega ruido (p. ej. Gaussiano) a la imagen de entrada y el modelo aprende a reconstruir la imagen limpia.
-
-Este modelo sirve como línea base de qué tan bien un método simple puede reconstruir / regenerar el dataset sin usar difusión.
-
-### Variables de entrada
-
-- **Imagen original** \(x \in \mathbb{R}^{16\times16\times3}\).  
-- Para la variante denoising:
-  - **Imagen ruidosa** \(\tilde{x} = x + \epsilon\), con:
-    - Ruido Gaussiano con \(\sigma \in [0.1, 0.2]\), y/o  
-    - Ruido tipo *masking* o *salt-and-pepper* (proporción de píxeles perturbados).
-
-### Variable objetivo
-
-- **Imagen objetivo**:  
-  - Autoencoder clásico: la propia imagen de entrada \(x\).  
-  - Denoising autoencoder: imagen limpia \(x\) a partir de \(\tilde{x}\).
-- El modelo aprende una función \(f_\theta(\tilde{x}) \approx x\).
-
-### Evaluación del modelo
-
-#### Métricas de evaluación
-
-- **val_loss**: pérdida de validación del modelo durante el entrenamiento (MSE sobre el conjunto de validación).
-- **MSE (Mean Squared Error)** entre imagen original y reconstruida.  
-- **PSNR (Peak Signal-to-Noise Ratio)** como métrica de calidad de señal.  
-- **SSIM (Structural Similarity Index)** para capturar similitud perceptual.  
-- **Análisis del espacio latente** (PCA / t-SNE y *silhouette score*); aún pendiente de cálculo en esta versión del experimento.
-
-En el mejor modelo entrenado se obtuvieron las siguientes métricas:
-
-#### Resultados de evaluación
-
-| Métrica              | Descripción                                      | Valor obtenido          |
-|----------------------|--------------------------------------------------|-------------------------|
-| val_loss             | Pérdida de validación (MSE)                      | 0.005559464450925589    |
-| MSE (promedio test)  | Error cuadrático medio de reconstrucción         | 0.004395863972604275    |
-| PSNR (dB)            | Calidad de señal promedio                        | 24.82591389982544       |
-| SSIM                 | Similitud estructural promedio                   | 0.9490600824356079      |
-
-### Análisis de los resultados
-
-- El autoencoder entrega una **referencia clara** de qué tan bien se pueden reconstruir las imágenes con un modelo relativamente simple.  
-- El **MSE ≈ 0.0044** y la **val_loss ≈ 0.0056** indican que el error de reconstrucción promedio es bajo para este tamaño de imagen (16×16×3).  
-- Un **PSNR ≈ 24.8 dB** sugiere que la señal reconstruida mantiene una relación señal-ruido razonablemente buena.  
-- El **SSIM ≈ 0.949** muestra que la estructura y el contenido perceptual de las imágenes se preservan muy bien, lo que indica que el modelo captura la geometría básica de los sprites.  
-- El análisis del **espacio latente** (PCA / t-SNE y *silhouette score*) queda como trabajo pendiente; cuando se calcule, permitirá verificar si el encoder está encontrando una representación más estructurada por clase que el espacio de píxeles crudo.
-
-### Conclusiones
-
-- Con estas métricas, el autoencoder / denoising autoencoder se adopta como un **baseline no difusivo sólido** para:
-  - Medir qué tan bien se puede reconstruir el dataset con un modelo simple.
-  - Obtener un **encoder entrenado** que luego se reutiliza en el modelo de **diffusion en espacio latente** (Modelo 4).
-- A partir de este baseline se evaluará si los modelos de difusión realmente aportan mejoras visibles en **calidad generativa** (PSNR, SSIM, FID-like) y en **estructura del espacio de representación**, una vez se complete el análisis del espacio latente.
-
+Notas:
+- El promedio de Exp3 se calcula como promedio simple de `fid_like_class_0..4` del run.
+- `Exp5-Ablation` no registra runs en `mlflow.db`; solo existe un run “científico” adicional y quedó incompleto.
 
 ---
 
-## Modelo 2: Diffusion en espacio de píxeles (DDPM baseline, sin condición de clase)
+## 3. Experimento 1 — Autoencoder / Denoising Autoencoder (baseline no difusivo)
 
-### Descripción del modelo
+### Objetivo (hipótesis)
+Tener un baseline generativo simple para comparar contra difusión: qué tanto puede reconstruir el dataset un autoencoder clásico (y su variante denoising).
 
-El segundo modelo es un **DDPM (Denoising Diffusion Probabilistic Model)** que opera directamente en **espacio de píxeles**:
+### Modelo (implementación esperada)
+- Encoder–Decoder convolucional:
+  - Input: 16×16×3
+  - Encoder: 2–3 bloques Conv + ReLU + MaxPool → latente de dimensión baja (p. ej. 32 o 64)
+  - Decoder: ConvTranspose / Upsampling → reconstrucción 16×16×3
+- Variante DAE: agregar ruido gaussiano al input y reconstruir la imagen limpia.
 
-- **Arquitectura principal**: U-Net pequeña, adaptada a imágenes 16×16×3.  
-  - 2 niveles de downsampling: 16→8→4 y simétrico de upsampling.  
-  - Canales típicos: 32–64–128 como máximo.  
-- **Embedding de tiempo**:  
-  - Embedding sinusoidal / posicional del paso de difusión \(t\), inyectado en la U-Net.  
-- **Proceso de difusión**:  
-  - Número de pasos T ≈ 200–400 (reducido por el tamaño pequeño 16×16).  
-  - *Schedule* de \(\beta_t\) lineal o coseno como baseline.
+### Parámetros clave (registrados en el mejor run)
+Fuente: run `ac2d65bbeb9f48df9131fc49f3359f2a`.
 
-### Variables de entrada
+- `latent_dim`: 64
+- `noise_sigma`: 0.15
+- `epochs`: 25
 
-- Durante entrenamiento:
-  - **Imagen real** \(x_0\).  
-  - Paso de difusión \(t \in \{1, \dots, T\}\).  
-  - Ruido gaussiano \(\epsilon \sim \mathcal{N}(0, I)\).  
-  - Imagen ruidosa \(x_t\) obtenida del *forward process*.
+### Evaluación (qué se buscaba medir)
+- Reconstrucción: MSE / PSNR / SSIM.
+- Calidad visual: grids de original vs reconstrucción.
+- Espacio latente: PCA/t-SNE y separabilidad (silhouette) para ver si el latente estructura mejor que píxeles.
 
-### Variable objetivo
+### Resultados (MLflow)
 
-- **Ruido real** \(\epsilon\) que se usó para corromper la imagen.  
-- El modelo aprende a predecir \(\hat{\epsilon}_\theta(x_t, t)\) minimizando:
-  - **Pérdida MSE** entre ruido real y ruido predicho.
+| Métrica | Valor |
+|---|---:|
+| `val_loss` | 0.005559464450925589 |
+| `MSE` | 0.004395863972604275 |
+| `PSNR` | 24.82591389982544 |
+| `SSIM` | 0.9490600824356079 |
 
-### Evaluación del modelo
-
-### Evaluación del modelo
-
-#### Métricas de evaluación
-
-1. **Calidad de muestras (sampling)**  
-   - Grillas de 8×8 imágenes generadas desde ruido puro.  
-   - Evaluación visual de:
-     - Diversidad de sprites.  
-     - Ausencia de artefactos.  
-
-2. **Estadísticas marginales**  
-   - Comparación de **histogramas de intensidades RGB** entre imágenes reales y generadas.  
-   - Comparación de la distribución en un espacio de **PCA** (reales vs generadas).  
-
-3. **“FID casero”**  
-   - Se utilizó un FID-like calculado en un espacio de *features* reducido con PCA a 20 dimensiones (**fid_like_pca20**).  
-   - Adicionalmente se registró la **train_loss** del modelo (pérdida promedio de entrenamiento, MSE entre ruido real y ruido predicho).
-
-En el mejor modelo DDPM en píxel space se obtuvieron las siguientes métricas numéricas:
-
-#### Resultados de evaluación
-
-| Métrica / análisis          | Descripción                                                    | Valor / Observación        |
-|----------------------------|----------------------------------------------------------------|----------------------------|
-| FID-like global (PCA-20)   | Distancia FID-like entre reales vs generadas en PCA-20        | 21.853602172478762         |
-| train_loss                 | Pérdida promedio de entrenamiento (MSE del ruido)             | 0.08807305246591568        |
-
-### Análisis de los resultados
-
-- Este modelo responde a la pregunta:  
-  > “¿Un DDPM simple en espacio de píxeles ya genera sprites creíbles de manera global?”
-- El **FID-like global ≈ 21.85** en PCA-20 proporciona una primera referencia cuantitativa de qué tan cerca están las muestras generadas de los datos reales en el espacio de *features*.  
-- La **train_loss ≈ 0.088** indica que el modelo ha aprendido a predecir el ruido con un error moderadamente bajo; sin embargo, la interpretación final depende de la comparación con configuraciones posteriores (modelos condicionados o en espacio latente).  
-- El análisis cualitativo (diversidad visual, artefactos, coincidencia de histogramas y de nubes en PCA) queda como trabajo pendiente de describir de forma sistemática a partir de las grillas de muestras y las gráficas correspondientes.  
-- En conjunto, estas métricas numéricas sirven como **baseline difusivo** sobre el cual se evaluará si:
-  - El condicionamiento por clase (Modelo 3) mejora la coherencia de las muestras.  
-  - La difusión en espacio latente (Modelo 4) puede igualar o superar este FID-like con menor costo computacional.
-
-### Conclusiones
-
-- El DDPM en píxeles sirve como **baseline difusivo** para comparar con:
-  - La versión **condicionada por clase** (Modelo 3).  
-  - La **diffusion en espacio latente** (Modelo 4).  
-- El valor de **fid_like_pca20 ≈ 21.85** y la **train_loss ≈ 0.088** establecen una línea base cuantitativa; los experimentos posteriores deben aspirar a **reducir el FID-like** y/o mejorar la calidad visual manteniendo costos de entrenamiento razonables.  
-- Este baseline permitirá determinar si la difusión, incluso sin condicionamiento, ya mejora significativamente la **variedad** y **realismo** de las muestras respecto al autoencoder, una vez se comparen directamente sus métricas y ejemplos visuales.
-
+### Lectura
+El autoencoder establece una referencia clara: reconstruye con alta fidelidad estructural (SSIM alto), pero **no es un generador de nuevas muestras**. Además, deja listo un encoder para explorar enfoques en latente (Exp4).
 
 ---
 
-## Modelo 3: Diffusion condicionada por clase (Class-conditional DDPM)
+## 4. Experimento 2 — Difusión en espacio de píxeles (DDPM baseline, sin condición)
 
-### Descripción del modelo
+### Objetivo (hipótesis)
+Entrenar un DDPM simple (unconditional) que aprenda la distribución global del dataset y genere sprites “creíbles” desde ruido.
 
-Se utiliza el mismo DDPM del Modelo 2, pero ahora **condicionado por clase**:
+### Modelo (implementación esperada)
+- DDPM pixel-space con U-Net pequeña:
+  - Downsampling: 16→8→4, simétrico en upsampling.
+  - Canales base típicos: 32–64–128.
+  - Embedding de tiempo t (sinusoidal/posicional) inyectado en la U-Net.
+- Pérdida: MSE entre ruido real y predicho.
 
-- **Condicionamiento por clase**:
-  - Las etiquetas se representan como **one-hot vectors**.  
-  - Se proyectan a un **embedding denso** (p. ej. 16–32 dimensiones).  
-  - Este embedding se concatena:
-    - A la entrada de la U-Net.  
-    - Y/o a los bloques residuales, junto con el embedding de tiempo.
-- Se mantienen:
-  - Mismo número de pasos T.  
-  - Mismo *schedule* de betas.  
-  - Mismo tamaño de U-Net, para que el cambio principal sea solo “sin condición vs condicionado”.
+### Parámetros clave (mejor run)
+Fuente: run `0fa38124710c42428d04bf583ec74120`.
 
-### Variables de entrada
+- `T`: 300
+- `beta_schedule`: linear
+- `batch_size`: 256
+- `epochs`: 50
+- `lr`: 2e-4
 
-- **Imagen ruidosa** \(x_t\).  
-- **Paso de difusión** \(t\).  
-- **Etiqueta de clase** \(y\) (one-hot, luego embebida).  
-- **Ruido** \(\epsilon\).
+### Evaluación (qué se buscaba medir)
+- Calidad visual: grids de muestras (8×8) desde ruido.
+- Estadísticas marginales: histogramas RGB reales vs generadas.
+- “FID casero”: distancia entre medias/covarianzas en un espacio de features (PCA o extractor auxiliar).
 
-### Variable objetivo
+### Resultados (MLflow)
 
-- Igual que en el Modelo 2:
-  - **Ruido real** \(\epsilon\) que corrompe la imagen, con pérdida MSE entre \(\epsilon\) y \(\hat{\epsilon}_\theta(x_t, t, y)\).
+| Métrica | Valor |
+|---|---:|
+| `train_loss` | 0.08807305246591568 |
+| `fid_like_pca20` | 21.853602172478762 |
 
-### Evaluación del modelo
-
-#### Métricas de evaluación
-
-1. **Coherencia de clase**  
-   - Se generan muestras condicionadas en cada clase.  
-   - Se pasan por el **clasificador auxiliar** (que tiene ~100% de accuracy en datos reales).  
-   - En esta versión del experimento aún no se registró explícitamente la **accuracy condicional**, por lo que queda como trabajo pendiente de cálculo y reporte.
-
-2. **FID / distancia de *features* por clase**  
-   - Se calculó un **FID-like por clase** entre:
-     - Features de imágenes reales de clase c.  
-     - Features de imágenes generadas condicionadas en c.  
-   - Estas métricas aparecen registradas como `fid_like_class_0` … `fid_like_class_4`.
-
-3. **Calidad visual**  
-   - Grids comparando:
-     - Muestras **no condicionadas** (Modelo 2).  
-     - Muestras **condicionadas** (Modelo 3) para la misma clase.
-   - El análisis cualitativo detallado (diversidad, artefactos, coherencia visual) se deja pendiente de documentar por escrito.
-
-Adicionalmente, se registró la **train_loss** del modelo, que corresponde a la pérdida promedio de entrenamiento (MSE entre ruido real y ruido predicho) en el esquema de difusión condicional.
-
-#### Resultados de evaluación
-
-| Clase | Accuracy condicional (clasificador auxiliar) | FID-like por clase      |
-|-------|----------------------------------------------|-------------------------|
-| 0     | *Pendiente de cálculo*                       | 19.12356543349288       | 
-| 1     | *Pendiente de cálculo*                       | 16.898045572589403      | 
-| 2     | *Pendiente de cálculo*                       | 17.39349062898828       | 
-| 3     | *Pendiente de cálculo*                       | 20.83842260591875       | 
-| 4     | *Pendiente de cálculo*                       | 21.93005297056078       | 
-
-Métrica global adicional:
-
-- **train_loss** ≈ 0.09294738620519638
-
-### Análisis de los resultados
-
-- Este experimento muestra **cómo cambia la estructura de las muestras** cuando el modelo sabe explícitamente qué clase debe generar.  
-- Los valores de **FID-like por clase** se sitúan aproximadamente entre **16.9 y 21.9**, lo que indica que, en el espacio de *features* utilizado, las imágenes generadas condicionadas por clase se mantienen relativamente cercanas a las distribuciones reales de cada etiqueta.  
-- La **train_loss ≈ 0.093** refleja que el modelo ha aprendido a predecir el ruido condicionalmente con un error moderado, coherente con la complejidad del problema y comparable con el DDPM no condicionado.  
-- Falta aún cuantificar la **accuracy condicional** usando el clasificador auxiliar; cuando se compute, permitirá validar numéricamente si las muestras generadas para la clase c son efectivamente reconocidas como tal.  
-- La comparación visual entre grids no condicionadas (Modelo 2) y condicionadas (Modelo 3) será clave para evaluar si el condicionamiento produce:
-  - Menos “mezcla de estilos” entre clases.  
-  - Mayor claridad en la forma, color y atributos característicos de cada etiqueta.  
-  - Ausencia de **mode collapse** (es decir, que dentro de cada clase aún haya diversidad de sprites).
-
-### Conclusiones
-
-- El modelo pasa (idealmente) de generar una mezcla de estilos a producir **estilos más definidos por clase**, manteniendo diversidad interna.  
-- Los valores de **FID-like por clase** constituyen una primera evidencia cuantitativa de que el condicionamiento por clase estructura mejor el espacio generativo, aunque se requiere complementar con la **accuracy condicional** del clasificador auxiliar.  
-- El **clasificador auxiliar** se mantiene como herramienta clave para cuantificar la calidad condicional; una vez se añadan esas métricas, este modelo servirá como base sólida para el **experimento de ablación (Modelo 5)**, donde se analizará la sensibilidad a T y a la capacidad de la U-Net bajo este esquema condicionado.
+### Lectura
+El DDPM unconditional produce muestras razonables y es un baseline difusivo sólido, pero al no usar clase puede mezclar estilos y perder coherencia intra-clase. Esto motiva el experimento condicional.
 
 ---
 
-## Modelo 4: Diffusion en espacio latente (Latent Diffusion “chiquito”)
+## 5. Experimento 3 — Difusión condicionada por clase (Class-conditional DDPM / AD3)
 
-### Descripción del modelo
+### Objetivo (hipótesis)
+Mejorar la estructura de las muestras cuando se especifica la clase objetivo. Dado que el clasificador auxiliar separa clases con alta precisión, el conditioning debería traducirse en mayor coherencia visual por clase y mejor métrica perceptual.
 
-Este modelo combina el **autoencoder del Modelo 1** con un proceso de difusión en su **espacio latente**:
+### Modelo (implementación esperada)
+- Mismo DDPM del Exp2, pero con conditioning por clase:
+  - `class_id` → embedding (p. ej. 16–32 dims) → fusión con embedding temporal.
+  - Inyección del conditioning en la U-Net (sesgo/FiLM/concatenación según diseño).
+- Mantener T y capacidad similares a Exp2 para aislar el efecto del conditioning.
 
-- Se usa el **encoder** entrenado del autoencoder:
-  - Imagen: \(x \rightarrow z\) (dimensión latente 32 o 64).  
-- El **modelo de difusión** opera sobre \(z\) en vez de sobre píxeles:
-  - Puede ser una **U-Net pequeña** (tratando \(z\) como mapa 4×4×C) o un modelo tipo **MLP / U-Net 1D**.  
-- Para generar muestras:
-  1. Se muestrea \(z\) mediante difusión: \(z \sim p_\theta(z)\).  
-  2. Se decodifica con el **decoder** del autoencoder:
-     - \(x = \text{decoder}(z)\).
+### Parámetros clave (mejor run)
+Fuente: run `c0ac7d681d664f62a1d31084292199ef`.
 
-### Variables de entrada
+- `T`: 300
+- `conditioning`: class_id
+- `epochs`: 50
+- `lr`: 2e-4
 
-- **Vector latente** \(z_0\) (derivado de imágenes reales).  
-- **Paso de difusión** \(t\).  
-- **Ruido** \(\epsilon\) aplicado en el espacio latente.
+### Evaluación (qué se buscaba medir)
+- Coherencia por clase:
+  - Idealmente, pasar samples por un clasificador auxiliar y medir accuracy condicional (no quedó registrado en MLflow en este experimento).
+- Distancia por clase:
+  - FID-like por clase: reales de clase c vs generadas condicionadas a c.
+- Calidad visual:
+  - grids por clase y comparación con Exp2.
 
-### Variable objetivo
+### Resultados (MLflow)
 
-- Igual que en los DDPM previos, pero en el espacio latente:
-  - El modelo aprende a predecir el **ruido sobre z**:
-    - \(\hat{\epsilon}_\theta(z_t, t)\).
+| Métrica | Valor |
+|---|---:|
+| `fid_like_class_0` | 19.12536543349288 |
+| `fid_like_class_1` | 16.898045572589403 |
+| `fid_like_class_2` | 17.39349062989828 |
+| `fid_like_class_3` | 20.83842260591875 |
+| `fid_like_class_4` | 21.93005297056078 |
+| **Promedio** | **19.23707544249202** |
 
-### Evaluación del modelo
-
-#### Métricas de evaluación
-
-1. **Reconstrucción + generación**  
-   - Comparar visualmente imágenes generadas por Latent Diffusion vs:
-     - Imágenes generadas en píxeles (Modelos 2–3).  
-   - Analizar si el **decoder introduce blur o artefactos**.  
-
-2. **Costo computacional**  
-   - Épocas / tiempo hasta converger frente al DDPM en píxeles.  
-   - **MSE de denoising en espacio latente**: en este experimento se registró como una única métrica global llamada `loss`, que corresponde a la pérdida promedio de entrenamiento del modelo de difusión en el espacio latente.
-
-3. **Feature-FID (usando CNN)**  
-   - Igual que antes, pero comparando:
-     - Features de imágenes reales.  
-     - Features de imágenes generadas por Latent Diffusion.  
-   - En esta corrida aún no se calculó explícitamente un FID-like, por lo que queda como trabajo pendiente.
-
-#### Resultados de evaluación
-
-En la mejor corrida del modelo de Latent Diffusion se obtuvo:
-
-| Métrica / análisis                 | Modelo píxeles (Exp 2/3) | Latent Diffusion (Exp 4)          |
-|------------------------------------|--------------------------|-----------------------------------|
-| MSE denoising (promedio, latent)   | —                        | 0.6203462481498718 (`loss`)      |
-
-### Análisis de los resultados
-
-- El modelo responde a la hipótesis:  
-  > “Espacio latente compacto + difusión → entrenamiento más rápido, con muestras igual de buenas.”
-- La métrica registrada (`loss ≈ 0.62`) representa el **error medio de denoising en el espacio latente**.  
-  - Su interpretación directa en términos de calidad visual no es tan inmediata como el MSE en píxeles, porque opera sobre la representación comprimida \(z\).  
-  - Para valorar si este valor es “alto” o “bajo” es necesario compararlo con:
-    - El comportamiento del autoencoder (qué tan bien reconstruye desde \(z\)).  
-    - La calidad visual final de las muestras reconstruidas (blur, artefactos).  
-- A falta de FID-like y tiempos de entrenamiento reportados, todavía no se puede concluir si Latent Diffusion:
-  - Mantiene una **calidad comparable** a los DDPM en píxeles.  
-  - Ofrece una **ventaja clara en costo computacional**.
-- Si en análisis visual se observa **blur excesivo** o pérdida de detalles finos, podría indicar que:
-  - El autoencoder está comprimiendo demasiado (bottleneck agresivo).  
-  - El modelo de difusión en \(z\) necesita más capacidad o más pasos de difusión.
-
-### Conclusiones
-
-- Este experimento permite valorar si, para un dataset tan pequeño en píxeles (16×16), vale la pena la complejidad conceptual de Latent Diffusion.  
-- Con la información disponible, el resultado principal es el **loss ≈ 0.62 en espacio latente**; para completar la evaluación se requiere:
-  - Calcular un **FID-like global** para Latent Diffusion.  
-  - Medir el **tiempo de entrenamiento** y compararlo con el DDPM en píxeles.  
-  - Documentar sistemáticamente la **impresión visual** (blur, artefactos, diversidad).  
-- Solo con esas piezas adicionales se podrá decidir si la difusión en espacio latente ofrece ventajas claras frente al uso de difusión directa en píxeles.
-
+### Lectura
+El conditioning reduce la distancia perceptual proxy frente al DDPM unconditional y mejora control por clase. AD3 queda como baseline fuerte del proyecto y punto de partida para la mejora AD6 (ver `docs/modeling/model_report.md`).
 
 ---
 
-## Modelo 5: Ablación — Ruido / número de pasos y capacidad del modelo
+## 6. Experimento 4 — Difusión en espacio latente (Latent Diffusion “chiquito”)
 
-### Descripción del modelo
+### Objetivo (hipótesis)
+Comprobar si difundir en un espacio latente compacto acelera entrenamiento y mantiene calidad comparable, aprovechando el encoder/decoder del Exp1.
 
-Este experimento es más **científico / de análisis de sensibilidad** que arquitectónico. Se estudia:
+### Modelo (implementación esperada)
+- Encoder: imagen → z (latente).
+- Difusión opera sobre z (MLP o U-Net pequeña sobre latente aplanado o mapa).
+- Generación: z ~ difusión → decoder → imagen.
 
-1. **Número de pasos de difusión (T)**.  
-2. **Capacidad de la U-Net (tamaño de canales)**.
+### Parámetros clave (mejor run)
+Fuente: run `158876ba6a9943379beac92117161f5e`.
 
-Se puede aplicar sobre el modelo condicional del Modelo 3 o sobre el DDPM en píxeles del Modelo 2.
+- `T`: 200
+- `latent_dim`: 1024 (latente aplanado)
+- `epochs`: 100
+- `batch_size`: 128
+- `learning_rate`: 1e-3
 
-### Variante A: Barrido sobre T
+### Evaluación (qué se buscaba medir)
+- Calidad visual y distancias tipo FID-like (comparables a pixel-space).
+- Costo computacional (tiempo a converger).
+- Riesgo: el decoder puede introducir blur y el latente puede requerir normalización cuidadosa.
 
-- Fijando el resto de hiperparámetros, se comparan modelos con:
-  - \(T \in \{50, 100, 200, 400\}\).
-- Se miden:
-  - Calidad visual de muestras.  
-  - Feature-FID.  
-  - Accuracy del clasificador auxiliar sobre las muestras generadas.
+### Resultados (MLflow)
 
-### Variante B: Barrido sobre capacidad
+| Métrica | Valor |
+|---|---:|
+| `loss` | 0.6203462481498718 |
 
-- Fijando un T razonable (por ejemplo, 200), se comparan arquitecturas:
-
-  - **Modelo “small”**: canales base 16–32–64.  
-  - **Modelo “medium”**: 32–64–128.  
-  - **(Opcional) Modelo “large”**: 64–128–256 (según recursos).
-
-- Métricas:
-  - Feature-FID.  
-  - Accuracy del clasificador auxiliar.  
-  - Tiempo de entrenamiento / uso de memoria.
-
-### Variables de entrada
-
-- Son las mismas que en el modelo de referencia (DDPM en píxeles o condicional).  
-- Lo que cambia son los **hiperparámetros T y capacidad**.
-
-### Variable objetivo
-
-- Sigue siendo la predicción del **ruido** en el proceso de difusión:
-  - \(\epsilon\) vs \(\hat{\epsilon}_\theta(x_t, t, y)\) o \(\hat{\epsilon}_\theta(x_t, t)\).
-
-### Evaluación del modelo
-
-#### Métricas de evaluación
-
-- **Feature-FID** global y/o por clase.  
-- **Accuracy del clasificador auxiliar** sobre muestras generadas.  
-- **Calidad visual** (artefactos, diversidad).  
-- **Costo computacional**:
-  - Tiempo de entrenamiento.  
-  - Memoria requerida.
-
-#### Resultados de evaluación
-
-*(Estructura para completar)*
-
-**Variante A: T**
-
-| T   | FID-like | Accuracy clasificador | Observaciones visuales | Tiempo de entrenamiento |
-|-----|----------|-----------------------|------------------------|-------------------------|
-| 50  |          |                       |                        |                         |
-| 100 |          |                       |                        |                         |
-| 200 |          |                       |                        |                         |
-| 400 |          |                       |                        |                         |
-
-**Variante B: capacidad**
-
-| Configuración   | Canales base      | FID-like | Accuracy clasificador | Tiempo / recursos | Observaciones |
-|-----------------|-------------------|----------|-----------------------|-------------------|---------------|
-| Small           | 16–32–64          |          |                       |                   |               |
-| Medium          | 32–64–128         |          |                       |                   |               |
-| Large (opcional)| 64–128–256        |          |                       |                   |               |
-
-### Análisis de los resultados
-
-- La ablación permite identificar **qué parámetros realmente importan** para este dataset:
-  - Si bajar mucho T degrada notablemente la calidad, entonces T es crítico.  
-  - Si aumentar capacidad apenas mejora métricas pero aumenta mucho tiempo/memoria, se puede justificar usar un modelo más pequeño.  
-- También permite encontrar un **punto de equilibrio** entre calidad y costo computacional.
-
-### Conclusiones
-
-- Este experimento orienta la **selección fina de hiperparámetros** para futuros modelos.  
-- Permite justificar, con datos, por qué se escoge cierto T y cierta capacidad de U-Net como configuración estándar.
+### Lectura
+La pérdida sola no permite compararlo directamente con FID-like de pixel-space. Para “cerrar” este experimento, se requiere un protocolo de evaluación comparable (misma métrica perceptual).
 
 ---
 
-## Conclusiones generales
+## 7. Experimento 5 — Ablación: ruido / pasos / capacidad
 
-- El **Autoencoder / Denoising Autoencoder** proporciona:
-  - Una referencia de reconstrucción.  
-  - Un encoder reutilizable para modelos en espacio latente.
-- El **DDPM en espacio de píxeles** muestra la capacidad de los modelos de difusión para aprender la distribución global de sprites, incluso sin condicionamiento.
-- El **DDPM condicionado por clase** explota la información de etiquetas, mejorando la coherencia de las muestras por clase y permitiendo métricas muy informativas con el clasificador auxiliar.
-- La **Diffusion en espacio latente** evalúa si un espacio comprimido puede acelerar entrenamiento sin sacrificar calidad.
-- El **experimento de ablación** ayuda a entender la sensibilidad a T y capacidad, y a diseñar modelos eficientes y bien justificados.
+### Objetivo (hipótesis)
+Identificar qué hiperparámetros mueven más la aguja en este dataset:
+- Número de pasos T (50, 100, 200, 400).
+- Capacidad del denoiser (canales base 16/32/64, etc.).
 
-En conjunto, estos cinco modelos construyen un **marco experimental completo** para estudiar la generación de sprites 16×16×3 con técnicas autoencoder y de difusión, tanto en píxeles como en latente.
+### Diseño planeado
+- Variante A: barrer T manteniendo el resto fijo.
+- Variante B: barrer capacidad manteniendo T fijo.
+- Métricas: Feature-FID, calidad visual, y (para modelos condicionales) accuracy del clasificador auxiliar sobre samples.
+
+### Evidencia disponible en MLflow (corrida incompleta)
+`Exp5-Ablation` no tiene runs en `mlflow.db`. Solo se registró un run bajo `Exp5-Ablation_Scientific` y terminó en FAILED, por lo que se reporta como evidencia parcial.
+
+Fuente: run `72576899bd3c43fe8264d504c4ebd802`.
+
+| Config | `T_steps` | `base_channels` | `epochs` | `train_loss` | `feature_fid` (↓) | `training_time_sec` |
+|---|---:|---:|---:|---:|---:|---:|
+| DDPM_T50_C32 | 50 | 32 | 15 | 0.189316 | 345.766827 | 2047.9076 |
+
+### Lectura
+Aunque incompleta, esta evidencia es consistente con la hipótesis: **T muy bajo** puede degradar fuertemente calidad (feature_fid alto). Para completar este experimento, se recomienda re-ejecutar los barridos y registrar runs FINISHED.
+
+---
+
+## 8. Cierre: cómo se conecta con AD6
+
+La narrativa completa del proyecto es:
+
+- Exp1 define un baseline de reconstrucción.
+- Exp2 demuestra que difusión en pixel-space funciona como generador global.
+- Exp3 muestra que el conditioning por clase mejora coherencia y métricas por clase.
+- Exp4 explora eficiencia en latente (pendiente de evaluación comparable).
+- Exp5 explica sensibilidad a hiperparámetros (parcialmente registrado).
+
+Sobre esa base, AD6 se plantea como la mejora lógica del camino Exp3: fortalecer arquitectura y muestreo (ResUNet, cosine schedule, EMA, CFG) para mejorar fidelidad. La comparación AD3 vs AD6 se presenta en `docs/modeling/model_report.md` usando `reports/evaluation/compare_ad3_ad6.json`.

@@ -1,55 +1,78 @@
-# Reporte de Datos
+# Reporte de datos (EDA)
 
-Este documento presenta una visión global, técnica y estructurada del dataset utilizado en el proyecto. Resume su composición, calidad, estructura latente y separabilidad, integrando evidencias generadas por los distintos módulos de EDA ubicados en `./scripts/eda`.
+Este documento presenta una visión global, técnica y orientada a decisiones de modelado sobre el dataset de pixel art del proyecto. Integra evidencia generada por los módulos EDA en `scripts/eda/`.
 
-Cada sección sintetiza hallazgos clave necesarios para comprender la naturaleza del dataset y su adecuación para modelos de difusión generativa y arquitecturas condicionadas por clase.
+Evidencia reproducible:
 
+- Métricas: `reports/eda/eda.json`
+- Figuras: `reports/figures/eda/`
+
+Para reproducir el EDA completo:
+
+```bash
+.\env\Scripts\python.exe scripts/eda/run_eda.py
+```
+
+---
 
 ## 1. Resumen general de los datos
 
-###  1.1 Número total de observaciones
-El dataset final contiene **89.400 imágenes** de pixel art, distribuidas en **20 categorías**.  
-La verificación cruzada entre:
+### 1.1 Número total de observaciones y consistencia
 
-- `labels.csv`  
-- `sprites.npy`  
-- la carpeta `raw/images/`
+El dataset contiene **89,400** imágenes. La consistencia se validó cruzando 4 fuentes (ver `eda.json` → `summary_general`):
 
-confirmó consistencia completa: todas las rutas son válidas y todas las imágenes tienen una etiqueta correcta. No existen desalineamientos entre rutas, índices o matrices cargadas.
+- `data/raw/sprites.npy`: 89,400 imágenes (formato array)
+- `data/raw/sprites_labels.npy`: 89,400 etiquetas (one-hot)
+- `data/raw/labels.csv`: 89,400 filas
+- `data/raw/images/images/`: 89,400 archivos en disco
+- Chequeo de rutas (muestra 500): 0 faltantes
 
----
+Implicación para el modelado: la canalización de datos es confiable; si un modelo falla, es poco probable que el problema sea “datos faltantes o desalineados”.
 
-###  1.2 Variables presentes
-Cada instancia incluye:
+### 1.2 Variables presentes (en un dataset de imágenes)
 
-- Matriz de píxeles: **16×16×3** (RGB)  
-- Etiqueta numérica: **0–5**  
-- Ruta del archivo (`path`) proveniente de `labels.csv`
+Aunque no hay “columnas” tradicionales, cada observación tiene:
 
----
+- Matriz de píxeles: **16×16×3** (RGB)
+- Etiqueta de clase: **5 clases** (`0..4`, inferidas de one-hot)
+- `path`: ruta de la imagen (en `labels.csv`, columna `Image Path`)
 
-###  1.3 Tipos de variables
+Nota sobre “categorías”: la idea original del documento asumía 20 categorías, pero en este proyecto el dataset está anotado en **5 macroclases** (consistente con el uso de `n_cfeat=5` en los experimentos de difusión). En `labels.csv`, la columna `Label` está almacenada como un vector one-hot en texto (por ejemplo: `"[0. 1. 0. 0. 0.]"`), y el pipeline la convierte a enteros `0..4` en `pixel_art_data.npz`.
 
-- **Variables numéricas:** valores RGB (0–255 o 0–1 según etapa del pipeline).  
-- **Variable categórica:** etiqueta (entero).  
-- **Variable de texto:** ruta del archivo.
+### 1.3 Tipos de variables
 
----
+- Numéricas: valores RGB (`uint8` 0–255 en raw; `float32` 0–1 en el dataset intermedio)
+- Categórica: clase (`0..4`)
+- Texto: ruta de archivo (`Image Path`)
 
-###  1.4 Verificación de faltantes
+### 1.4 Verificación de faltantes
 
-Se revisaron tres fuentes (`labels.csv`, imágenes, matrices `.npy`) y se encontró:
+Validaciones realizadas (ver `eda.json` → `data_quality` y `summary_general`):
 
-- No existen rutas faltantes.  
-- No hay imágenes corruptas o ilegibles.  
-- `sprites.npy` y `sprites_labels.npy` tienen dimensiones idénticas.  
+- `labels.csv` sin valores faltantes en `Image Index`, `Image Path`, `Label`
+- 0 errores de lectura en disco en una muestra de 500 imágenes (PIL)
+- `sprites.npy` y `sprites_labels.npy` con el mismo número de filas (89,400)
 
-El dataset está completo y limpio.
+### 1.5 Distribución general de las imágenes
 
----
+Mosaico aleatorio (300 sprites) para inspección visual rápida:
 
-### ✔️ 1.5 Distribución general de las imágenes
-- Mosaico aleatorio de **100–300 imágenes**.  
+![Mosaico 300](../../reports/figures/eda/summary_general/mosaic_300.png)
+
+Distribución de clases (dataset **no balanceado**):
+
+| Clase | # imágenes |
+|---:|---:|
+| 0 | 8,000 |
+| 1 | 32,400 |
+| 2 | 6,000 |
+| 3 | 35,000 |
+| 4 | 8,000 |
+
+Implicación para el modelado:
+
+- Si entrenamos un modelo condicional por clase, es probable que las clases mayoritarias (1 y 3) dominen el gradiente. Para comparar modelos de forma justa, conviene usar *balanced sampling* o evaluar por clase.
+- Al ser todo 16×16, conviene diseñar arquitecturas pequeñas/medianas (U-Nets con 2 niveles de downsampling suelen ser suficientes) y usar interpolación *nearest* al visualizar para evitar blur.
 
 ---
 
@@ -57,576 +80,239 @@ El dataset está completo y limpio.
 
 ### 2.1 Presencia de valores faltantes
 
-No se detectaron:
+Reporte exacto (ver `eda.json` → `data_quality`):
 
-- Imágenes sin entrada en CSV.  
-- Rutas inválidas.  
-- Errores de lectura (PIL/OpenCV).  
+- Imágenes sin entrada en CSV: 0 (por conteo consistente)
+- Rutas inválidas (muestra 500): 0
+- Errores de lectura (muestra 500): 0
 
----
+### 2.2 Duplicados
 
-###  2.2 Duplicados
+Se detectaron **duplicados exactos a nivel de píxel** mediante hash MD5 sobre `sprites.npy`:
 
-Se evaluó duplicidad mediante **hash perceptual**:
+- Total: 89,400
+- Únicas: 1,722
+- Duplicadas: 87,678 (**98.07%**)
 
-- Se identificaron **≈87.700 duplicados**, producto de imágenes repetidas en el dataset original.  
-- El subconjunto de imágenes únicas contiene **1.665 sprites**.  
-- La distribución de intensidades se mantiene estable entre dataset completo y dataset único, validando que la reducción no afecta la estructura probabilística del dominio visual.
+Implicación para el modelado:
 
----
+- En difusión, los duplicados pueden reducir diversidad efectiva y aumentar el riesgo de “memorizar sprites” en lugar de aprender variaciones. Si el objetivo es diversidad, conviene entrenar/evaluar sobre un set deduplicado o reponderar ejemplos.
+- Para comparaciones rápidas (experimentos), entrenar con un set deduplicado puede reducir tiempo sin perder cobertura del “estilo” general.
 
-###  2.3 Valores extremos o inconsistencias
+### 2.3 Valores extremos o inconsistencias
 
-Se evaluaron casos anómalos:
+Chequeos automáticos:
 
-- No hay sprites totalmente negros ni totalmente blancos.  
-- No aparecen imágenes con ruido puro o patrones incoherentes.  
-- El número de colores únicos por sprite se mantiene en rangos propios del pixel art (entre **5 y 20 colores** en la mayoría).  
-- No existen sprites con más de 50 colores ni con menos de 3.  
+- Sprites completamente negros: 0
+- Sprites completamente blancos: 0
 
----
+Chequeos de paleta en una muestra de 8,000 (ver `eda.json` → `palette_stats`):
 
-###  2.4 Outliers visuales
+- Imágenes con menos de 3 colores: 0
+- Imágenes con más de 50 colores: 2,684
+- Imágenes con más de 128 colores: 2,090
 
-- Se observaron algunas imágenes con paletas o contornos menos convencionales, pero no se consideran errores.  
-- No existen outliers severos.  
-- Se decidió **mantener** todos los casos, pues aportan variabilidad al dominio generativo.
+Interpretación: “muchos colores” no necesariamente es un error en pixel art; puede indicar sprites con sombreado, dithering o antialias. Lo importante es que no aparecieron casos degenerados (0/1/2 colores) en la muestra.
 
----
+Distribución de intensidad media por imagen:
 
-###  2.5 Acciones tomadas
+![Intensidad media](../../reports/figures/eda/data_quality/mean_intensity_hist.png)
 
-Durante la construcción del dataset intermedio `pixel_art_data.npz` se aplicaron:
+### 2.4 Outliers visuales
 
-- Redimensionamiento uniforme a 16×16 px.  
-- Conversión a `float32`.  
-- Normalización a **[0,1]**.  
-- Eliminación de duplicados mediante perceptual hash.  
-- Regeneración del dataset procesado en formato `.npz` para uso eficiente en entrenamiento.
+En este EDA se priorizó evidencia cuantitativa + mosaicos. Como siguiente paso, se recomienda generar una pequeña galería de “outliers” (por ejemplo: top-N por intensidad media, o por número de colores) para revisar casos raros sin sesgo.
 
----
+### 2.5 Acciones tomadas (dataset intermedio)
 
-## 3. Variable objetivo
+El dataset `data/intermediate/pixel_art_data.npz` deja los datos listos para entrenamiento:
 
-<!-- *(Adaptación del concepto para modelos de difusión)*
-En modelos generativos **la variable objetivo es la propia imagen**:
-> x ~ p_data -->
-Los script que a los que se hace referencia en cada uno de los item analizados se encuentran dentro de `.\scripts\eda`
+- Conversión a `float32`
+- Normalización a [0, 1]
+- Etiquetas como enteros (`int32`, `0..4`)
 
-### ✔️ 3.1 Explicar por qué la variable objetivo es la imagen
-<!-- - No clasificamos.
-- No predecimos.
-- Buscamos **modelar la distribución completa de los datos**. -->
-
-Esta parte se analizo con ayuda del script `3_1_variable_objetivo.py`.
-
-Anteriormente se observo la posibilidad de que cada una de las imagenes puede identificarse con un hash el cual se puede utilizar para determinar que imagenes se parecen entre si, con lo que se pudieron determinar conjuntos de imagenes parecidas entre si, por lo que queremos ver como es el comportamiento de la distribución de intensidad tanto del conjunto original de imagenes como el de imagenes únicas. Al final de la ejecución podemos observar el histograma de la distribución de cada conjunto, junto a una imagen muy probable dentro del conjunto y otra de ruido poco probable dentro del mismo.
-
-Los graficos de densidades son muy similares entre si, siendo los valores de intensidad cercanos a cero los que acumulan la mayor parte de la densidad, dandonos a entender que en todas las imagenes el color negro o cercanos a este predomina sobre los demás. Además, la simiitud entre los histogramas implica que apezar de quedarse únicamente con las imagenes diferentes, la estructura probabilistica de la intensidad se mantiene entre los conjuntos. Esto nos permite mejorar los tiempos de procesamiento trabajando con el conjunto de imagenes únicas, habiendo pasado de $84.000$ a $1.665$.
-
-### ✔️ 3.2 Distribución global de las imágenes
-<!-- - Histogramas promedio de colores.
-- Distribución de intensidades por canal RGB.
-- Visualización del “promedio” por clase. -->
-
-Como resultado de la ejecución del script `3_2_distri_imagenes.py`, podemos concluir lo siguiente.
-
-Los histogramas muestran que al utilizar las imagenes únicas, hay una disminución en la densidad de la intensidad representada por el negro, lo que es coherente con los resultados obtenidos en el caso anteior. También podemos ver que las imagenes promedio son similares para ambos conjuntos, ya que la disminución se da en una zona de las imagenes donde domina el negro.
-
-### ✔️ 3.3 Variabilidad intra-clase
-<!-- - Mosaicos 5×5 por clase.
-- Comparación visual de ejemplos dentro de una misma categoría. -->
-Como resultado de la ejecución del script `3_3_variable_interclase.py`, podemos concluir lo siguiente.
-
-Con el fin de comprender  las caracteristicas visuales de algunas de las categorias se compara el contenidos de dos mosaicos de $5\times5$ para dos categorias ecogidas al azar. La falta de homogeneidad de los objetos observados dentro de cada uno de los mosaicos, dejan ver que hay algo de `lable noise` dentro de todas las categorias, aumentando la variabilidad intra clases en todas las categorias y exigiendo a futuro mayor capacidad por parte de los modelos que se vayan a implementar.
-
-### ✔️ 3.4 Variabilidad global
-<!-- - **PCA** sobre vectores flattenizados (16×16×3 → 768 componentes).
-- **t-SNE** para clusters naturales. -->
-
-Como resultado de la ejecución del script `3_4_variabilidad_global.py`, podemos concluir lo siguiente.
-
-PCA nos permitirá descomponer las imágenes (vectores de 768 dimensiones) y entender qué dimensiones (o combinaciones de píxeles) explican la mayor parte de la variación en tu dataset de pixel art. Esto es crucial para la eficiencia, ya que, si el 99% de la varianza se explica con solo 50 componentes, podemos reducir drásticamente la dimensionalidad para ciertos entrenamientos o análisis posteriores. Por esta razón utilizaremos el criterio del umbral, identificando la cantidad de componentes en donde se tiene el 80% y el 90% de la varianza explicada, la ejecución del script muestra la cantidad de componentes necesarias para cada porcentaje escogido.
-
-## 4. Variables individuales
-
-*(Adaptado a análisis de imágenes)*
-
-### ✔️ 4.1 Canales RGB como variables
-<!-- - Histograma por canal.
-- Distribución de valores RGB por clase.
-- Estadísticas descriptivas por canal. -->
-
-Como resultado de la ejecución del script `4_1_rgb_variable.py`, podemos concluir lo siguiente.
-
-En la ejecución de este script podemos ver los siguientes resultados en cuanto a medidas estadisticas
-
-## 📊 Estadísticas Descriptivas Globales (Canales RGB)
-Canal  Media  StdDev  Min   Q1  Mediana     Q3    Max
-    R  64.96   79.15 0.00 1.00    17.00 128.00 255.00
-    G  70.59   83.84 0.00 3.00    17.00 143.00 255.00
-    B  76.80   86.86 0.00 4.00    24.00 158.00 255.00
-
-Donde podemos ver todos los canales de color alcanzan la menor y mayor intensidad en algun momento, siendo esto respaldado por el hecho de la gran cantidad de areas o pixeles en negro que hay dentro de las imagenes, debido a esto también podemos ver que las desviaciones estandar tienen valores bastante altos con respecto a las medias de intensidad en cada uno de los canales. Este script tiene la capacidad de almacenar los histogramas y medidas estadisticas obtenidas en una nueva carpeta de nombre `analisis_4_1_rgb` dentro del directorio de git principal.
-
-### ✔️ 4.2 Número de colores por imagen
-<!-- - Conteo de colores únicos.
-- Relación entre número de colores y etiqueta.
-- Clasificación por:
-- Low palette
-- Mid palette
-- High palette -->
-
-Como resultado de la ejecución del script `4_2_numero_colores.py`, podemos concluir lo siguiente.
-
-El analisis en este script se realizo con 8000 imagenes obtiendo como resultado
-
-## 🎨 Distribución de Imágenes por Tipo de Paleta
-       palette_class  Conteo
- High_Palette (>128)    7515
-Mid_Palette (33-128)     485
-
-Lo que indica que la matoria de las imagenes tienen una gran variedad de colores, lo que implica que el dominio del negro en los histogramas que se han generado hasta el momento, no esta relacionada con la diversidad de colores de la imagen.
-
-<!-- ### ✔️ 4.3 Estructura espacial
-- Verificar centrado del sprite.
-- Análisis de espacio vacío vs contenido.
-- Heatmap de densidad de píxeles por clase.
-
-### ✔️ 4.4 Posibles transformaciones
-- Normalización.
-- Estandarización de paleta.
-- Pixel-shuffle (opcional).
-- Augmentations razonables:
-- Flip horizontal
-- Shift pequeño
-- Rotación mínima (<15°)
-- Jitter de color
-
-### ✔️ 4.5 Relación con etiqueta
-- Mapas de calor por clase.
-- Imagen promedio por clase.
-- Modos de color por clase. -->
-
-## 5. Ranking de variables
-
-*(Justificación metodológica adaptada)*
-
-### 5.1 — Análisis PCA del Dataset Pixel Art
-
-Este análisis utiliza PCA para evaluar cuánta información visual se puede comprimir sin pérdida significativa en las imágenes del dataset (89400 sprites de 16×16×3). El objetivo es entender la estructura latente del dataset, la redundancia cromática y la complejidad real de sus variaciones espaciales.
+Implicación: la mayoría de modelos de difusión/AE pueden consumir el `.npz` directamente sin pasos extra de preprocesamiento.
 
 ---
 
-#### Variancia explicada
+## 3. Variable objetivo (adaptación a difusión)
 
-La matriz aplanada resultante tiene dimensión 768 por imagen. Al aplicar PCA, observamos cómo la varianza total se acumula a medida que se agregan componentes principales:
+### 3.1 Por qué la variable objetivo es la imagen
 
-- **PC1:** 12.13 % de la variabilidad total  
-- **Primeras 10 componentes:** 46.88 %  
-- **Primeras 20 componentes:** 59.59 %  
-- **Primeras 30 componentes:** ~70 %  
+En difusión no se predice una etiqueta: el modelo aprende a aproximar la distribución completa de imágenes `x ~ p_data`. La tarea se construye como:
 
-La siguiente figura muestra la curva completa de varianza acumulada:
+- forward: agregar ruido a imágenes reales (proceso conocido)
+- reverse: aprender a quitar ese ruido paso a paso (proceso aprendido)
 
-![Variance curve](../../reports/figures/eda/pca/variance_ratio.png)
+### 3.2 Distribución global de las imágenes
 
-La curva crece con fuerza en los primeros componentes y luego se aplana, lo que indica que gran parte de la información está concentrada en pocas direcciones latentes. Esto revela un dataset altamente estructurado, con patrones visuales consistentes y poca variabilidad caótica.
+Evidencia de “imagen real” vs “ruido” y comparación de intensidades (muestra 2,000):
 
----
+![Variable objetivo](../../reports/figures/eda/target_variable/target_variable.png)
 
-#### Reconstrucciones por número de componentes
+Además, se observan distribuciones por canal RGB (muestra de píxeles) y medias por clase:
 
-Para evaluar el poder reconstructivo del PCA, se reconstruyó una imagen del dataset utilizando diferentes cantidades de componentes. Esto permite visualizar cuánta información se pierde al reducir dimensionalidad.
+![RGB histogramas](../../reports/figures/eda/rgb/rgb_global_histograms.png)
+![RGB medias por clase](../../reports/figures/eda/rgb/rgb_class_means.png)
 
-##### Reconstrucción con 10 componentes
+Implicación: preservar el color (3 canales) es importante; convertir a grayscale perdería señal discriminativa y estilística.
 
-El resultado conserva la forma general pero pierde detalle fino. Los colores se agrupan en bloques y la silueta es apenas perceptible:
+### 3.3 Variabilidad intra-clase
 
-![k10](../../reports/figures/eda/pca/reconstruction_k10.png)
+Mosaicos 5×5 para dos clases seleccionadas (seed fija) muestran que dentro de una misma clase hay variación visual:
 
-##### Reconstrucción con 20 componentes
+![Variabilidad intra-clase](../../reports/figures/eda/variability/intraclass_mosaic_seed18.png)
 
-La forma, proporciones y colores principales se restauran con mayor precisión. Se observan contornos más claros y sombras más coherentes:
+Implicación: un modelo generativo debe tener capacidad para diversidad intra-clase; un condicionamiento por clase (DDPM condicional) ayuda a fijar el “estilo” sin colapsar a una única imagen.
 
-![k20](../../reports/figures/eda/pca/reconstruction_k20.png)
+### 3.4 Variabilidad global
 
-##### Reconstrucción con 30 componentes
+PCA sobre imágenes (768 dimensiones flatten):
 
-A partir de 30 componentes, la reconstrucción es visualmente estable y muy cercana al original. El nivel de detalle recuperado es suficiente para preservar la identidad del sprite:
+- 1er componente: 12.13% de varianza
+- 10 componentes: 46.88% de varianza acumulada
+- 20 componentes: 59.60% de varianza acumulada
 
-![k30](../../reports/figures/eda/pca/reconstruction_k30.png)
+![PCA varianza acumulada](../../reports/figures/eda/pca/variance_ratio.png)
 
----
+La separabilidad en embeddings no lineales (t-SNE) sugiere estructura, pero no clusters “limpios” en un espacio simple:
 
-#### Interpretación técnica
+![t-SNE por clase](../../reports/figures/eda/class_separability/tsne_labels.png)
 
-El comportamiento del PCA revela varias características clave del dataset:
-
-- **Alta compresibilidad:** Un subconjunto pequeño de componentes explica más del 50 % de la variación visual.
-- **Estructura visual consistente:** La similitud entre sprites (formas redondeadas, paletas suaves, simetría) reduce la necesidad de dimensiones adicionales.
-- **Información dominada por patrones globales:** Los cambios importantes provienen de grandes bloques de color y no de texturas locales complejas.
-- **Latent space compacto:** Para modelos generativos posteriores (CNN, autoencoders, diffusion) basta un espacio latente de baja dimensionalidad; no es necesario trabajar directamente con los 768 píxeles originales.
+Implicación: si queremos buena calidad visual, conviene un backbone con no linealidades fuertes (U-Net con residuales/FiLM) más que modelos lineales o demasiado pequeños.
 
 ---
 
-#### Conclusión
+## 4. Variables individuales (adaptado a imágenes)
 
-El análisis PCA demuestra que el dataset de pixel art es altamente estructurado y presenta redundancia visual significativa. Con solo 20–30 componentes ya es posible reconstruir imágenes con fidelidad considerable. Esto indica que:
+### 4.1 Canales RGB como variables
 
-1. Los modelos de aprendizaje pueden entrenar rápidamente sobre este dominio.  
-2. Es viable trabajar con representaciones latentes comprimidas.  
-3. La estructura visual es lo suficientemente coherente como para permitir modelos condicionados por clase.
+Estadísticas descriptivas globales por canal (raw `uint8`, 0–255):
 
-Este punto del análisis confirma que el dataset es ideal para métodos generativos basados en representaciones compactas y controlables.
+| Canal | Media | Std | Min | Q1 | Mediana | Q3 | Max |
+|:--:|---:|---:|---:|---:|---:|---:|---:|
+| R | 176.36 | 97.38 | 0 | 81 | 250 | 255 | 255 |
+| G | 172.60 | 96.57 | 0 | 80 | 235 | 255 | 255 |
+| B | 165.55 | 102.19 | 0 | 57 | 244 | 255 | 255 |
 
+### 4.2 Número de colores por imagen
 
-### 5.2 — Importancia del Color en el Dataset Pixel Art
+Conteo de colores únicos (muestra 8,000; ver `eda.json` → `palette_stats`):
 
-Este análisis evalúa cómo los canales de color (R, G, B) contribuyen a la variabilidad del dataset de pixel art. Se analiza su varianza global, su comportamiento por clase, su colorfulness perceptual y la cantidad de información que retiene cada uno mediante PCA. Este estudio es fundamental para comprender la estructura estilística del dataset y para orientar el diseño de modelos generativos condicionados por color.
+- Low palette (≤32): 5,277
+- Mid palette (33–128): 633
+- High palette (>128): 2,090
 
----
+![Paleta histograma](../../reports/figures/eda/palette/palette_hist.png)
+![Paleta por clase](../../reports/figures/eda/palette/palette_boxplot_by_class.png)
 
-#### Varianza global por canal
+Implicación: hay clases con paletas significativamente distintas; el condicionamiento por clase puede estabilizar estas diferencias (y CFG puede reforzarlas durante el muestreo).
 
-El análisis de varianza global muestra cuánta variabilidad aporta cada canal a través de todo el dataset. Los valores obtenidos son:
+### 4.3 Estructura espacial (pendiente de automatizar)
 
-- **R:** 0.1303  
-- **G:** 0.1267  
-- **B:** 0.1772  
+La idea original incluye: centrado del sprite, distribución del contenido y heatmaps por clase. Esto es importante porque:
 
-El canal **B** emerge como el más variable y, por tanto, el más informativo. Esto sugiere que la mayor parte del contraste y cambio visual se encuentra en la dimensión azul del espacio RGB, probablemente debido al uso intensivo de tonos púrpuras, rosados y sombreados fríos característicos del dataset.
+- Si el contenido suele estar centrado, U-Nets pequeños funcionan muy bien.
+- Si el contenido está desplazado, conviene usar *small shifts* como augmentation y/o entrenar con padding adecuado.
 
-![Varianza global](../../reports/figures/eda/color/global_variance.png)
+Recomendación: añadir un módulo EDA que calcule “ratio de píxeles vacíos” y mapas de densidad por clase (heatmaps) para justificar augmentations y decisiones de arquitectura.
 
----
+### 4.4 Posibles transformaciones (recomendadas para este dominio)
 
-#### Varianza por clase
+Para pixel art, se recomienda priorizar transformaciones que no introduzcan blur:
 
-Al segmentar por clase, la variabilidad adquiere mayor significado:
+- Normalización consistente (ya aplicada en `pixel_art_data.npz`).
+- Augmentations leves y respetuosas del estilo:
+  - `flip` horizontal (si semánticamente tiene sentido)
+  - `shift` pequeño (1–2 píxeles)
+  - rotación mínima (≤15°) solo si no rompe el estilo
+  - jitter de color muy leve (si se quiere robustez, con cuidado)
 
-- **Clase 3** presenta la mayor variación en los tres canales.  
-- **Clase 2** es la más homogénea, lo que indica paletas más restringidas.  
-- En todas las clases, el canal **B sigue siendo dominante**, confirmando su rol estructural en el estilo visual.
+Implicación: estas transformaciones son más valiosas si se entrena sobre un set deduplicado, porque “inyectan” variación donde antes había repeticiones exactas.
 
-Esto respalda la hipótesis de que cada clase agrupa sprites provenientes de **diferentes fuentes o estilos artísticos**.
+### 4.5 Relación con la etiqueta (evidencia visual)
 
-![Varianza por clase](../../reports/figures/eda/color/variance_by_class.png)
+Las medias por clase (promedio de imágenes) ayudan a entender qué está codificando la etiqueta:
 
----
+| C0 | C1 | C2 | C3 | C4 |
+|---|---|---|---|---|
+| ![C0](../../reports/figures/eda/class_separability/label_mean_class0.png) | ![C1](../../reports/figures/eda/class_separability/label_mean_class1.png) | ![C2](../../reports/figures/eda/class_separability/label_mean_class2.png) | ![C3](../../reports/figures/eda/class_separability/label_mean_class3.png) | ![C4](../../reports/figures/eda/class_separability/label_mean_class4.png) |
 
-#### Colorfulness por clase
-
-La métrica de **Hasler & Süsstrunk** aproxima la percepción humana del color basado en contrastes RG y YB. Los promedios obtenidos:
-
-- **Clase 1:** 0.3807 (la más saturada)  
-- **Clase 2:** 0.3051  
-- **Clases 0, 3, 4:** entre 0.22 y 0.23  
-
-La Clase 1 destaca como el estilo más vibrante, mientras que las demás se mantienen más neutras o uniformes en saturación.
-
-![Colorfulness por clase](../../reports/figures/eda/color/colorfulness_by_class.png)
-
----
-
-#### Importancia de los canales mediante PCA
-
-Se aplica PCA por canal para medir cuánta varianza captura el primer componente principal (PC1) de cada uno:
-
-- **R:** 0.1741  
-- **G:** 0.1564  
-- **B:** 0.1848  
-
-Nuevamente, el canal **B** es el que más información concentra, lo que coincide con todos los análisis anteriores.
-
-![PCA por canal](../../reports/figures/eda/color/pca_by_channel.png)
+Implicación: si el objetivo es controlar “estilo” o “familia visual”, el condicionamiento por clase es una señal adecuada y estable.
 
 ---
 
-#### Ranking integrado de importancia cromática
+## 5. Ranking de variables (adaptación a imágenes)
 
-Combinando:
+Aunque en modelos generativos no existe un “ranking de variables” tradicional, usamos proxies que ayudan a justificar complejidad de modelo:
 
-- Varianza global  
-- Varianza explicada por PCA  
+### 5.1 PCA
 
-el puntaje final queda:
+La curva de varianza + reconstrucciones (k=10/20/30) muestran cuánta estructura puede comprimirse linealmente:
 
-- **B:** 0.3620  
-- **R:** 0.3044  
-- **G:** 0.2831  
+![PCA recon k10](../../reports/figures/eda/pca/reconstruction_k10.png)
+![PCA recon k20](../../reports/figures/eda/pca/reconstruction_k20.png)
+![PCA recon k30](../../reports/figures/eda/pca/reconstruction_k30.png)
 
-El orden es:
+### 5.2 Importancia del color
 
-**B > R > G**
+Se observa que el canal B aporta mayor variabilidad global (ver `eda.json` → `color_importance`):
 
-Esto confirma que el azul es el eje cromático dominante del dataset.
+![Varianza global por canal](../../reports/figures/eda/color/global_variance.png)
 
----
+### 5.3 Separabilidad entre clases
 
-#### Conclusiones
+Métricas no supervisadas sobre píxeles/PCA:
 
-El análisis del color revela:
-
-1. El **canal azul (B)** es el que mayor información aporta en todos los niveles evaluados.  
-2. Las clases muestran firmas cromáticas diferentes, lo que apunta a **diferencias estilísticas entre las fuentes del pixel art**.  
-3. La Clase 1 es la más saturada y visualmente intensa; la Clase 3 es la más variable; la Clase 2 es la más uniforme.  
-4. El color es un atributo altamente discriminativo en el dataset, lo que será clave para modelos de clasificación, generación y condicionamiento.
-
-La importancia estructural del color, especialmente del canal azul, sugiere que los modelos generativos pueden beneficiarse de arquitecturas que traten explícitamente la información cromática —ya sea mediante embeddings condicionados, espacios latentes separados o módulos para manejo de estilo.
-
----
-
-
-
-### 5.3 — Separabilidad entre clases
-
-La separabilidad entre clases en un dataset visual como este determina qué tan “objetiva” es la etiqueta para un modelo. Aunque cada sprite tiene una resolución mínima (16×16×3), sus variaciones cromáticas, posicionales y temáticas pueden generar un espacio continuo más que uno discreto. Esta sección evalúa ese fenómeno desde la estructura visual, estadísticas de color, embeddings reducidos y métodos no supervisados.
-
----
-
-#### **Visualización directa por clase (mosaicos)**
-
-Los mosaicos permiten observar la coherencia temática interna de cada etiqueta. Las clases humanoides mantienen proporciones y poses similares; las criaturas exhiben variaciones de color vibrante; frutas y vegetales presentan patrones redondeados; los ítems se distinguen por contornos geométricos y simetrías.
-
-![Class 0](../../reports/figures/eda/class_separability/label_grid_class0.png)
-![Class 1](../../reports/figures/eda/class_separability/label_grid_class1.png)
-![Class 2](../../reports/figures/eda/class_separability/label_grid_class2.png)
-![Class 3](../../reports/figures/eda/class_separability/label_grid_class3.png)
-![Class 4](../../reports/figures/eda/class_separability/label_grid_class4.png)
-
----
-
-#### **Imágenes promedio por clase**
-
-El promedio condensa las regiones cromáticas dominantes. Las clases humanoides (0 y 4) colapsan en siluetas simétricas; las criaturas (1) muestran masas difusas y verdes/azules; ítems (3) generan formas circulares sin detalle; frutas (2) forman manchas cálidas, coherentes con su paleta.
-
-![Mean 0](../../reports/figures/eda/class_separability/label_mean_class0.png)
-![Mean 1](../../reports/figures/eda/class_separability/label_mean_class1.png)
-![Mean 2](../../reports/figures/eda/class_separability/label_mean_class2.png)
-![Mean 3](../../reports/figures/eda/class_separability/label_mean_class3.png)
-![Mean 4](../../reports/figures/eda/class_separability/label_mean_class4.png)
-
----
-
-#### **Colorimetría por clase**
-
-Las medias RGB reflejan tendencias claras:
-
-- Clases **2** (frutas) → paletas cálidas y valores altos en rojo y verde.
-- Clases **0/4** (humanos) → colores neutros, dominancia marrón/gris.
-- Clase **1** (criaturas) → saturación elevada en verdes y azules.
-- Clase **3** (ítems) → dispersión alta debido a variabilidad temática.
-
-Pese a esto, las desviaciones estándar son amplias en todas las clases, anticipando una fuerte superposición en espacios de color puros.
-
----
-
-#### **t-SNE: proyección del espacio visual**
-
-La proyección t-SNE confirma la intuición: las clases no forman grupos compactos. Los puntos se mezclan formando un gradiente continuo donde todos los tipos de sprites coexisten sin fronteras nítidas. Las clases sólo se distinguen en zonas muy pequeñas del espacio.
-
-![t-SNE](../../reports/figures/eda/class_separability/tsne_labels.png)
-
-Esta estructura dispersa indica que **la etiqueta de clase no está codificada linealmente en los píxeles**. Cualquier modelo que busque separar clases deberá aprender rasgos altamente no lineales.
-
----
-
-#### **Silhouette score**
-
-El puntaje silhouette cuantifica la cohesión intraclase y separación interclase.  
-Los resultados son negativos tanto en el espacio crudo como en PCA-50:
+- Silhouette (raw): -0.051
+- Silhouette (PCA 50): -0.034
+- KMeans@PCA (k=5): ARI 0.058, NMI 0.194
 
 ![Silhouette](../../reports/figures/eda/class_separability/silhouette_scores.png)
+![Etiquetas vs clusters](../../reports/figures/eda/class_separability/confusion_clusters.png)
 
-Valores:
-- Raw pixels: **–0.051**
-- PCA-50: **–0.034**
-
-Un valor negativo implica que las instancias están más cerca de otras clases que de la propia. En términos prácticos: **el dataset no presenta clusters naturales para estas cinco etiquetas**.
+Implicación: el separador de clases no es lineal/simple; un modelo generativo debe capturar patrones convolucionales (espaciales) para controlar bien la clase.
 
 ---
-
-#### **K-means (5 clusters)**
-
-K-means se ejecutó para `k=5` sin usar etiquetas. La matriz de confusión entre predicción de cluster y clase real confirma el solapamiento:
-
-![K-means confusion](../../reports/figures/eda/class_separability/confusion_clusters.png)
-
-Los clusters no corresponden a las clases originales. Algunas clases se dividen en varios clusters, y varios clusters contienen instancias múltiples de distintas etiquetas. Las métricas no supervisadas lo ratifican:
-
-- Adjusted Rand Index: **0.057**
-- Normalized Mutual Information: **0.194**
-
-Ambas cercanas a 0 → **alineamiento casi aleatorio**.
-
----
-
-### **Conclusión técnica**
-
-Este análisis deja claro que las clases del dataset **no son separables de forma lineal ni semicompacta** en su espacio visual original. Aunque cada categoría tiene coherencia estética superficial, las estructuras internas se traslapan profundamente: poses similares, paletas similares, contornos redondeados, saturación inconsistente.
-
-En consecuencia:
-
-1. **Métodos no supervisados no recuperan la estructura real.**  
-2. **Un modelo supervisado debe aprender rasgos altamente específicos**: contornos, proporciones, siluetas y microtexturas.  
-3. **La etiqueta no es trivial**: requiere redes convolucionales capaces de extraer invariancias espaciales.  
-4. **La mezcla visual sugiere que la dificultad del dataset no está en la finura del arte sino en su similitud estructural.**
-
-Este comportamiento explica por qué arquitecturas simples pueden fallar, mientras que modelos convolucionales moderados (o autoencoders previos) logran capturar las señales necesarias.
 
 ## 6. Relación entre variables explicativas y variable objetivo
 
+### 6.1 Matriz de correlación (cómo se adapta a imágenes)
 
-- Ratio de píxeles vacíos vs clase.
+Para imágenes, la correlación útil suele ser entre resúmenes numéricos y la clase, por ejemplo:
 
-### 6.1 — Clasificador Auxiliar CNN (Separabilidad Real entre Clases)
+- media RGB por imagen vs clase
+- número de colores únicos vs clase
+- ratio de píxeles vacíos vs clase (pendiente de calcular)
 
-Este experimento entrena una CNN pequeña para evaluar si las clases del dataset contienen un *signal visual fuerte*, es decir, si es posible distinguirlas a partir de sus patrones cromáticos y espaciales sin un modelo profundo.  
-El objetivo no es obtener un modelo final, sino medir la **separabilidad visual real** del dataset.
+### 6.2 Diagramas de dispersión (proxies interpretables)
 
----
+Ejemplos recomendados:
 
-### Resultados obtenidos
+- PCA1 vs PCA2 coloreado por clase (o t-SNE ya generado)
+- colorfulness vs clase
+- (vacíos) vs clase
 
-#### Precisión por época
+### 6.3 Mini-modelo auxiliar (clasificador)
 
-El modelo alcanza **≈100 % de accuracy en validación** desde muy temprano, lo que indica que las clases poseen patrones visuales extremadamente consistentes.
+Se entrenó una CNN pequeña (10 epochs) sobre `pixel_art_data.npz`:
+
+- `val_accuracy` final: 1.00
 
 ![Accuracy](../../reports/figures/eda/aux_classifier/accuracy_curve.png)
-
----
-
-#### Pérdida por época
-
-La pérdida cae a casi cero en solo 1–2 épocas, reforzando el comportamiento de separabilidad fuerte entre clases.
-
 ![Loss](../../reports/figures/eda/aux_classifier/loss_curve.png)
-
-- **Loss final:** 0.00007  
-- **Accuracy final:** 100 %  
-
----
-
-### Matriz de confusión
-
-La CNN clasifica *todas* las imágenes de validación correctamente.  
-La matriz es diagonal perfecta:
-
 ![Confusion matrix](../../reports/figures/eda/aux_classifier/confusion_matrix.png)
 
-Esto solo ocurre cuando los clusters visuales están extremadamente bien definidos.
+Implicación directa para elegir modelo:
+
+- La clase es altamente predecible por patrones espaciales → conditioning por clase es viable.
+- La señal es no lineal → U-Nets con residuales/FiLM (y/o CFG en sampling) tienen más probabilidad de dar resultados estables que un U-Net demasiado simple.
 
 ---
 
-### Interpretación técnica
+## Recomendaciones para elegir modelos (basadas en EDA)
 
-Los resultados permiten extraer varias conclusiones clave:
-
-#### **1. Separabilidad absoluta**
-Una CNN mínima identifica cada clase con precisión perfecta.  
-Esto sugiere que:
-
-- dentro de cada clase hay **muy baja variabilidad**,  
-- entre clases hay **diferencias visuales claras y robustas**.
-
-#### **2. Las etiquetas no son aleatorias**
-El modelo no podría converger así si las labels fueran ruido.  
-Las clases parecen representar:
-
-- estilos visuales,
-- fuentes gráficas diferentes,
-- pipelines/artistas distintos,
-- o familias de sprites con estructuras muy similares.
-
-#### **3. Es viable un modelo condicionado por clase**
-Dado el comportamiento perfecto:
-
-- los modelos generativos pueden usar conditioning estable,
-- se pueden generar estilos diferenciados fácilmente,
-- no habrá mezclas espurias entre clases.
-
----
-
-### Conclusión
-
-Este análisis confirma que:
-
-1. Las clases poseen **identidad visual fuerte**.  
-2. El dataset es **limpio, estructurado y altamente separable**.  
-3. La arquitectura del modelo generativo puede incorporar conditioning por clase sin riesgo.  
-
-El clasificador auxiliar funciona como evidencia empírica de que la estructura latente observada en PCA, análisis de color, t-SNE y UMAP también se refleja en un modelo discriminativo simple.
-
----
-
-## Conclusiones Generales del Dataset
-
-El análisis integral del dataset revela que se trata de un conjunto **altamente estructurado**, con patrones visuales fuertes, clases coherentes y un estilo gráfico uniforme que facilita el modelado generativo. A partir de la exploración realizada, se concluye lo siguiente:
-
-### 1. La estructura visual del dataset es extremadamente consistente
-PCA, colorimetría, distribuciones de intensidad y promedios por clase muestran que:
-
-- Las imágenes comparten siluetas, proporciones y paletas similares.
-- Gran parte de la variabilidad se concentra en pocas dimensiones latentes.
-- Con **20–30 componentes PCA** se puede reconstruir buena parte del contenido visual.
-
-Esto indica un **espacio latente compacto** y perfectamente utilizable para modelos de difusión.
-
-### 2. El color es un factor discriminativo fuerte
-El análisis cromático demuestra:
-
-- El canal **B (azul)** domina la variabilidad global.
-- Cada clase posee una firma cromática estable.
-- Las diferencias entre clases están asociadas tanto al estilo como a fuentes visuales distintas.
-
-Esto refuerza la idea de que los modelos generativos pueden beneficiarse de *conditioning* basado en color y clase.
-
-### 3. Las clases muestran coherencia interna, aunque no forman clusters naturales
-Tanto t-SNE como silhouette indican:
-
-- Las clases no forman grupos compactos en términos puramente geométricos.
-- Hay solapamiento visual superficial entre clases (paletas y formas similares).
-- La etiqueta no corresponde a divisiones lineales en el espacio de píxeles.
-
-Sin embargo…
-
-### 4. Una CNN pequeña logra **100% de accuracy**, revelando separabilidad real
-El clasificador auxiliar demuestra que:
-
-- Las clases **sí contienen información visual fuerte**, pero no representada linealmente.
-- Las diferencias reales son no lineales y espaciales (contornos, microtexturas, poses).
-- Estas señales son suficientemente robustas para ser detectadas por redes convolucionales simples.
-
-Esto confirma que el etiquetado **es sólido** y que los modelos generativos condicionados funcionarán sin ambigüedades.
-
-### 5. El dataset es adecuado para modelos de difusión
-Los hallazgos convergen en una idea central:
-
-**El dataset tiene estructura, variabilidad controlada y clases muy diferenciables.**  
-Esto lo convierte en un candidato ideal para:
-
-- Modelos de difusión,
-- Autoencoders,
-- Representaciones latentes compactas,
-- Modelos condicionados por clase,
-- Transferencia de estilo visual.
-
-### 6. A nivel práctico, el dataset es limpio, consistente y eficiente
-- No se registran anomalías severas.
-- La resolución es uniforme (16×16×3).
-- Las clases tienen tamaños equilibrados.
-- Los duplicados fueron gestionados adecuadamente.
-- El procesamiento es rápido gracias a la compacidad del dominio visual.
-
----
-
-### **Conclusión Final**
-
-El dataset posee tres propiedades clave:
-
-1. **Estructura latente compacta**  
-2. **Separabilidad no lineal pero fuerte entre clases**  
-3. **Coherencia estética que facilita el aprendizaje generativo**
-
-En conjunto, esto respalda la viabilidad técnica del proyecto y sienta una base sólida para el modelado, especialmente para técnicas de difusión donde la calidad del espacio latente y la consistencia visual son determinantes.
+1. Priorizar modelos de difusión condicionales por clase (por la separabilidad supervisada perfecta).
+2. Manejar explícitamente el desbalance de clases (sampling balanceado y evaluación por clase).
+3. Considerar estrategias ante duplicados (deduplicación o reponderación) para mejorar diversidad y eficiencia.
+4. Mantener el pipeline en pixel-space (16×16) con U-Net pequeño/mediano; la complejidad debe venir de residuales/condicionamiento, no de resolución.
+5. Usar EMA y un schedule estable (p. ej. cosine) si el objetivo es calidad/estabilidad de muestreo.
