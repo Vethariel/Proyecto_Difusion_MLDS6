@@ -1,181 +1,155 @@
-# Pixel Art Diffusion Project
+# PixelGen — Diffusion para Pixel Art (AD3 vs AD6)
 
-Este repositorio contiene el pipeline completo para construir un modelo generativo basado en *diffusion*, utilizando un dataset de 89.400 imágenes de pixel art (16×16×3). El proyecto implementa un ciclo profesional de ciencia de datos con:
+PixelGen es un proyecto end-to-end para generar sprites de **pixel art (16×16 RGB)** usando modelos de difusión (DDPM). Incluye adquisición y transformación de datos, EDA reproducible, entrenamiento de modelos, evaluación cuantitativa y un demo de despliegue con Gradio para comparar **AD3 vs AD6** lado a lado.
 
-- **DVC** para manejo de datos, caché y versiones del pipeline.
-- **EDA profunda** (PCA, t-SNE, análisis cromático, separabilidad de clases, CNN auxiliar).
-- **Scripts modulares** para lectura, limpieza, procesado y análisis.
-- **Estructura robusta de carpetas** siguiendo el estándar de proyectos ML reproducibles.
+![Demo AD3 vs AD6](<reports/deployment/AD3 vs AD6.gif>)
 
 ---
 
-## 🚀 Objetivo del Proyecto
+## Qué hay en este repositorio
 
-Construir un *modelo de difusión* capaz de generar pixel art coherente, limpio y controlable por clase.  
-El dataset original contiene ruido, duplicados y variaciones estilísticas; por eso se diseñó un pipeline de EDA + procesamiento que permite:
-
-- Detectar duplicados y quedarse con imágenes únicas.  
-- Limpieza y normalización del dataset.
-- Evaluación de separabilidad real entre clases.
-- Exploración de la estructura latente del dominio visual.
-
-Todas las fases están versionadas con **DVC** para garantizar reproducibilidad y trazabilidad.
+- **Datos**: `data/raw/` (artefactos originales) y `data/intermediate/pixel_art_data.npz` (formato normalizado listo para modelado).
+- **EDA reproducible**: `scripts/eda/run_eda.py` + resultados en `reports/eda/eda.json` y `reports/figures/eda/`.
+- **Modelos**:
+  - **AD3**: DDPM condicional (baseline fuerte).
+  - **AD6**: ResUNet + FiLM + cosine schedule + EMA + classifier-free guidance (mejora sobre AD3).
+- **Evaluación**: `scripts/evaluation/compare_models.py` + resultados en `reports/evaluation/`.
+- **Despliegue**: `app.py` (Gradio) para generación y visualización del denoising.
 
 ---
 
-## 📂 Estructura del Proyecto
+## Resultados clave
 
-```
-.
-├── data/
-│   ├── raw/               # Datos originales sin procesar
-│   ├── intermediate/      # Resultados generados por scripts (versionados con DVC)
-│   └── processed/         # Conjunto final para entrenamiento de la difusión
-│
-├── scripts/
-│   ├── eda/               # Análisis exploratorio modular (3.x, 5.x, 6.x)
-│   ├── processing/        # Limpieza, normalización, hashing, uniques
-│   └── run_eda.py         # Orquestador unificado del EDA
-│
-├── reports/
-│   ├── figures/           # Gráficas generadas por todos los análisis
-│   └── eda/               # Archivos de texto y JSON con resultados
-│
-├── docs/
-│   ├── data_summary.md    # Reporte completo del EDA
-│   └── methodology.md     # Diseño metodológico del proyecto
-│
-├── dvc.yaml               # Pipeline declarativo
-├── dvc.lock               # Trazabilidad exacta del experimento
-├── README.md              # Documento actual
-└── requirements.txt
-```
+- **Calidad de datos**: sin faltantes/corrupción en las validaciones; alta redundancia (duplicados exactos) en raw.
+- **EDA**: separabilidad por clase fuerte en términos no lineales (clasificador auxiliar con 100% accuracy).
+- **Modelos**: AD6 mejora consistentemente frente a AD3 en una métrica proxy Feature-FID (PCA); ver `docs/modeling/model_report.md`.
 
 ---
 
-## 🧠 Scripts Clave
+## Quickstart
 
-### `scripts/run_eda.py`
-Orquestador general del EDA.  
-Ejecuta:
+### 1) Crear entorno e instalar dependencias
 
-- 3.1 – Variable objetivo  
-- 3.2 – Distribución de imágenes  
-- 3.3 – Variabilidad intra-clase  
-- 3.4 – Variabilidad global  
-- 5.1 – PCA  
-- 5.2 – Importancia del color  
-- 5.3 – Separabilidad entre clases  
-- 6.3 – CNN auxiliar
-
-Los resultados se guardan en:
-
-```
-reports/eda/eda.json
-reports/figures/eda/
-```
-
----
-
-## 📦 Uso del Proyecto
-
-### 1. Clonar el repo
-```
-git clone https://github.com/usuario/pixel-art-diffusion.git
-cd pixel-art-diffusion
-```
-
-### 2. Instalar dependencias
-```
+```bash
+python -m venv env
+.\env\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 3. Descargar los datos con DVC
-```
-dvc pull
+### 2) Obtener datos (raw)
+
+```bash
+.\env\Scripts\python.exe scripts/data_acquisition/download_raw_data.py
 ```
 
-### 4. Ejecutar el EDA completo
-```
-python scripts/run_eda.py
+
+### 3) Generar dataset intermedio (recomendado para modelado)
+
+```bash
+.\env\Scripts\python.exe scripts/preprocessing/raw_to_npz.py
 ```
 
-### 5. Regenerar datos procesados
+### 4) Ejecutar EDA
+
+```bash
+.\env\Scripts\python.exe scripts/eda/run_eda.py
 ```
-dvc repro
+
+Salida principal:
+
+- `reports/eda/eda.json`
+- `reports/figures/eda/`
+
+---
+
+## Entrenamiento y evaluación
+
+### Entrenar AD6 (opcional)
+
+```bash
+.\env\Scripts\python.exe scripts/training/AD6.py
+```
+
+Artefactos esperados:
+
+- `artifacts_exp6/ddpm_resunet_ad6.keras`
+- `artifacts_exp6/ddpm_resunet_ad6_ema.keras`
+- `artifacts_exp6/schedule_ad6.npz`
+
+Para el demo, estos artefactos deben estar en `data/models/` (ver `docs/deployment/deploymentdoc.md`).
+
+### Comparar AD3 vs AD6 (métrica proxy)
+
+```bash
+.\env\Scripts\python.exe scripts/evaluation/compare_models.py
+```
+
+Salida:
+
+- `reports/evaluation/compare_ad3_ad6.json`
+
+Resumen (ver `docs/modeling/model_report.md`): AD6 mejora consistentemente frente a AD3 en Feature-FID (proxy) basado en PCA.
+
+---
+
+## Demo de despliegue (Gradio)
+
+La app permite generar sprites y comparar el denoising de **AD3 (izquierda)** vs **AD6 (derecha)**, incluyendo galerías de frames intermedios con escalado *pixel-perfect* (nearest-neighbor).
+
+Requisitos:
+
+- Modelos en `data/models/` (AD3, AD6 EMA y schedule AD6).
+
+Ejecutar:
+
+```bash
+.\env\Scripts\python.exe app.py
+```
+
+Abrir: `http://127.0.0.1:7860`
+
+---
+
+## Documentación (fuente de verdad)
+
+- Negocio: [`docs/business_understanding/project_charter.md`](docs/business_understanding/project_charter.md)
+- Datos:
+  - [`docs/data/data_definition.md`](docs/data/data_definition.md)
+  - [`docs/data/data_dictionary.md`](docs/data/data_dictionary.md)
+  - [`docs/data/data_summary.md`](docs/data/data_summary.md)
+- Modelamiento:
+  - [`docs/modeling/baseline_models.md`](docs/modeling/baseline_models.md)
+  - [`docs/modeling/model_report.md`](docs/modeling/model_report.md)
+- Despliegue: [`docs/deployment/deploymentdoc.md`](docs/deployment/deploymentdoc.md)
+- Cierre: [`docs/acceptance/exit_report.md`](docs/acceptance/exit_report.md)
+
+---
+
+## Estructura (resumen)
+
+```
+data/
+  raw/
+  intermediate/
+  models/
+scripts/
+  data_acquisition/
+  preprocessing/
+  eda/
+  training/
+  evaluation/
+reports/
+  eda/
+  figures/
+  evaluation/
+  deployment/
+docs/
 ```
 
 ---
 
-## 📊 Resultados principales
+## Equipo
 
-- El dataset tiene **altísima redundancia**, reduciendo ~89.400 → 1.665 imágenes únicas.
-- La distribución de intensidad se mantiene entre dataset completo y único.
-- PCA revela que **20–30 componentes** capturan la mayor parte de la estructura.
-- El canal azul **B** es el eje cromático dominante.
-- t-SNE y metrics no supervisadas muestran baja separabilidad lineal.
-- Una **CNN auxiliar logra 100% accuracy**, evidenciando separabilidad profunda no lineal.
-
-Todos los gráficos están disponibles en:
-
-```
-reports/figures/eda/
-```
-
----
-
-## ☁️ DVC y flujo de datos
-
-El pipeline controla:
-
-- Descarga de imágenes crudas.
-- Limpieza y hashing.
-- Generación de dataset procesado `.npz`.
-- EDA completo con sus salidas.
-
-Modificar cualquier script hace que DVC regenere automáticamente la etapa afectada.
-
-Esto garantiza:
-
-- **Reproducibilidad**
-- **Trazabilidad**
-- **Versionado de datasets y gráficas**
-- **Ejecución consistente entre integrantes del equipo**
-
----
-
-## 🤝 Equipo
-
-Proyecto desarrollado por:
-
-- **David Paloma**
-- **Juan Ayala**
-- **Daniel Gracia**
-
-Bajo la metodología TDSP aplicada al desarrollo de modelos generativos.
-
----
-
-## 📌 Estado del Proyecto
-
-✔️ EDA finalizado  
-✔️ Pipeline limpio  
-✔️ Dataset procesado  
-⬜ Entrenamiento del modelo de difusión  
-⬜ Evaluación y benchmarks  
-⬜ Generación de experimentos condicionados
-
----
-
-## 🔮 Próximos pasos
-
-1. Construcción de la U-Net para difusión.  
-2. Entrenamiento con conditioning por clase.  
-3. Evaluación de FID, IS y métricas perceptuales.  
-4. Implementación de GUI minimal para generar sprites.
-
----
-
-## 📄 Licencia
-
-MIT — uso libre para investigación y desarrollo.
+- David Paloma
+- Juan Ayala
+- Daniel Gracia
